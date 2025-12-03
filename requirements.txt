@@ -1,0 +1,6 @@
+MultiPyVu
+PyYAML
+numpy
+pandas
+pillow
+pywin32
