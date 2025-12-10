@@ -1,13 +1,13 @@
 
 class MeasurementDevice:
 
-    KEYS = []
-    LOGGING_KEYS = []
-
     def __init__(self):
         self.last_values = {}
         self.info = None
         self.calibration = None
+        self.keys = []
+        self.logging_keys = []
+        self.plotting_keys = []
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -17,8 +17,8 @@ class MeasurementDevice:
     def get_logging_readings(self):
         readings = self.get_readings()
         logging_readings = {}
-        for i in range(len(self.KEYS)):
-            logging_readings[self.LOGGING_KEYS[i]] = readings[self.KEYS[i]]
+        for i in range(len(self.keys)):
+            logging_readings[self.logging_keys[i]] = readings[self.keys[i]]
         return logging_readings
 
     # return if data is ready to be read
