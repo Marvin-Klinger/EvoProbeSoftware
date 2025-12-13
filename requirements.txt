@@ -4,3 +4,4 @@ numpy
 pandas
 pillow
 pywin32
+matplotlib
