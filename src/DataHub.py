@@ -32,7 +32,8 @@ class DataHub:
 
     # starts the logging process and graph
     def start_logging(self):
-        pass
+        self.reader.start()
+        self.graph.start()
 
     # adds new row to df and propagate to other classes (graph)
     def update_df(self, data):
