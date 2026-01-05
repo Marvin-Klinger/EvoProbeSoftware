@@ -1,7 +1,9 @@
 MultiPyVu
 PyYAML
 numpy
-pandas
+pandas~=2.2.3
 pillow
 pywin32
-matplotlib
+matplotlib~=3.10.3
+
+PyQt5~=5.15.9
