@@ -9,6 +9,8 @@ class GuiSequenceSelect(qtw.QWidget):
 
     def __init__(self):
         super().__init__()
+
+        self.setFont(qtg.QFont("Bahnschrift", 16))
         self.setLayout(qtw.QVBoxLayout())
         setup_btn = qtw.QPushButton("Setup")
         setup_btn.setFixedWidth(setup_btn.sizeHint().width())
