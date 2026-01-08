@@ -7,3 +7,4 @@ pywin32
 matplotlib~=3.10.3
 
 PyQt5~=5.15.9
+lakeshore~=1.8.1

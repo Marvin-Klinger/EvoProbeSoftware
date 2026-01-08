@@ -21,10 +21,6 @@ class MeasurementDevice:
             logging_readings[self.logging_keys[i]] = readings[self.keys[i]]
         return logging_readings
 
-    # return if data is ready to be read
-    def is_ready(self):
-        return True
-
     # configures physical device
     def configure(self, settings):
         pass
