@@ -19,6 +19,7 @@ class LakeshoreDevice:
         self.lakeshore: Model372 = None
         self.input_channels = input_channels
         self.scanner_queue = deque()
+        self.scanner_interval = scanner_interval
         self.current_channel = None
         self.is_ready = False
         self.is_cycling = False
@@ -43,6 +44,7 @@ class LakeshoreDevice:
 
         def cycle():
             while self.is_cycling:
+                time.sleep(self.scanner_interval)
                 self.set_next_scanner_position()
 
         t = Thread(target=cycle, daemon=True)

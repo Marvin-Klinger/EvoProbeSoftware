@@ -19,8 +19,8 @@ class LakeshoreChannel(MeasurementDevice):
         self.calibration = calibration
         # TODO: is quadrature needed?
         self.keys = ["kelvin", "resistance", "power"]
-        self.logging_keys = [f"{key[:2]}_{self.input_channel.name}" for key in self.keys]
-        self.plotting_keys = [f"{key[:2]}_{self.input_channel.name}" for key in self.keys]
+        self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
+        self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
 
         self.last_reading = {"kelvin": np.nan, "resistance": np.nan, "power": np.nan}
 
@@ -34,12 +34,12 @@ class LakeshoreChannel(MeasurementDevice):
         else:
             return {key: np.nan for key in self.keys}
 
-    # returns readings mapped to logging_keys
+    # returns readings converted to list
     def get_logging_readings(self):
         readings = self.get_readings()
-        logging_readings = {}
-        for i, key in enumerate(self.keys):
-            logging_readings[self.logging_keys[i]] = readings[key]
+        logging_readings = []
+        for key in self.keys:
+            logging_readings.append(readings[key])
         return logging_readings
 
     # configures channels setup settings in lakeshore device

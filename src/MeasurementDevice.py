@@ -16,9 +16,9 @@ class MeasurementDevice:
     # converts readings to data usable by DataHub
     def get_logging_readings(self):
         readings = self.get_readings()
-        logging_readings = {}
-        for i in range(len(self.keys)):
-            logging_readings[self.logging_keys[i]] = readings[self.keys[i]]
+        logging_readings = []
+        for key in self.keys:
+            logging_readings.append(readings[key])
         return logging_readings
 
     # configures physical device

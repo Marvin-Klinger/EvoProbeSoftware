@@ -16,6 +16,7 @@ class DataHub:
         for device in self.measurement_devices:
             columns += device.logging_keys
         self.df = pd.DataFrame(columns=columns)
+        self.df.to_csv(self.save_path, encoding="utf-8", index=False)
 
         self.reader = DataReader(datahub=self,
                                  measurement_devices=self.measurement_devices,

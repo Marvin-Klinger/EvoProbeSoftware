@@ -1,4 +1,3 @@
-from DataHub import DataHub
 from MeasurementDevice import MeasurementDevice
 from threading import Thread
 from datetime import datetime
@@ -7,7 +6,7 @@ import time
 
 class DataReader(Thread):
 
-    def __init__(self, datahub: DataHub, measurement_devices: list[MeasurementDevice], interval=2):
+    def __init__(self, datahub, measurement_devices: list[MeasurementDevice], interval=2):
         super().__init__()
         self.datahub = datahub
         self.measurement_devices = measurement_devices
