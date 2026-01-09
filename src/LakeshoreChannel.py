@@ -20,6 +20,7 @@ class LakeshoreChannel(MeasurementDevice):
         # TODO: is quadrature needed?
         self.keys = ["kelvin", "resistance", "power"]
         self.logging_keys = [f"{key[:2]}_{self.input_channel.name}" for key in self.keys]
+        self.plotting_keys = [f"{key[:2]}_{self.input_channel.name}" for key in self.keys]
 
         self.last_reading = {"kelvin": np.nan, "resistance": np.nan, "power": np.nan}
 
@@ -42,8 +43,12 @@ class LakeshoreChannel(MeasurementDevice):
         return logging_readings
 
     # configures channels setup settings in lakeshore device
-    def configure_setup_settings(self, settings: Model372InputSetupSettings):
+    def configure(self, settings: Model372InputSetupSettings):
         self.lakeshore.configure(self.input_channel.value, settings)
+
+    # establishes connection to the physical device
+    def connect(self):
+        self.lakeshore.connect()
 
 
 if __name__ == "__main__":

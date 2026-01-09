@@ -1,5 +1,5 @@
 from DataReader import DataReader
-from LiveGraph import LiveGraph
+from LiveGraph import LiveGraph, QueueItemType, Operations
 from MeasurementDevice import MeasurementDevice
 import pandas as pd
 from multiprocessing import Process, Queue
@@ -37,7 +37,7 @@ class DataHub:
 
     # adds new row to df and propagate to other classes (graph)
     def update_df(self, data):
-        self.graph_queue.put(["data", data])
+        self.graph_queue.put([QueueItemType.DATA, data])
         self.df.loc[len(self.df)] = data
         with open(self.save_path, "a") as file:
             file.write(",".join([str(i) for i in data]) + "\n")

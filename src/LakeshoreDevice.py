@@ -80,6 +80,9 @@ class LakeshoreDevice:
 
     # establishes connection to the physical device
     def connect(self):
+        if self.lakeshore is not None:
+            return
+
         if LakeshoreDevice.DEBUG_MODE:
             self.lakeshore = Model372Mock(baud_rate=None)
             return

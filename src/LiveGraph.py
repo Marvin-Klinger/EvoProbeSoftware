@@ -62,9 +62,9 @@ class LiveGraph(Process):
         while not self.queue.empty():
             item = self.queue.get()
             match item[0]:
-                case "data":
+                case QueueItemType.DATA:
                     self.add_data(item[1])
-                case "op":
+                case QueueItemType.OPERATION:
                     self.execute_operation(*item[1:])
                 case _:
                     pass
@@ -142,6 +142,11 @@ class LiveGraph(Process):
         #     self.timer = 0
         #     print(f"time: {temp - self.timestamp}\nfps: {(temp - self.timestamp) ** -1}")
         # self.timestamp = temp
+
+
+class QueueItemType(Enum):
+    DATA = 0
+    OPERATION = 1
 
 
 class Operations(Enum):
