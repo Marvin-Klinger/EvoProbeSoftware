@@ -3,7 +3,6 @@ import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QPushButton
 
 
 class GuiSetup(qtw.QWidget):
@@ -65,9 +64,9 @@ class GuiSetup(qtw.QWidget):
         control_hbox.layout().setContentsMargins(10, 0, 0, 0)
         control_form.addRow(control_hbox)
 
-        ppms_btn = QPushButton("PPMS")
+        ppms_btn = qtw.QPushButton("PPMS")
         control_hbox.layout().addWidget(ppms_btn)
-        dynacool_btn = QPushButton("DynaCool")
+        dynacool_btn = qtw.QPushButton("DynaCool")
         control_hbox.layout().addWidget(dynacool_btn)
         control_hbox.layout().addStretch()
 
@@ -97,7 +96,7 @@ class GuiSetup(qtw.QWidget):
             measurement_grid.addWidget(card, card_count // 4, card_count % 4)
             card_count += 1
 
-        add_btn = QPushButton("+")
+        add_btn = qtw.QPushButton("+")
         add_btn.setFont(qtg.QFont("Bahnschrift", 30,))
         add_btn.setFixedSize(60, 60)
         measurement_grid.addWidget(add_btn, card_count // 4, card_count % 4)
@@ -152,7 +151,7 @@ class DeviceCard(qtw.QFrame):
         info_btn.setContentsMargins(0, 0, 0, 0)
         topbar.layout().addWidget(info_btn)
         topbar.layout().addStretch()
-        edit_btn = QPushButton("Ξ")
+        edit_btn = qtw.QPushButton("Ξ")
         edit_btn.setFixedSize(*btn_size)
         edit_btn.setContentsMargins(0, 0, 0, 0)
         topbar.layout().addWidget(edit_btn)
@@ -166,10 +165,3 @@ class DeviceCard(qtw.QFrame):
         name.setFont(qtg.QFont("Bahnschrift", 30))
         name.setContentsMargins(20, 0, 20, 10)
         self.layout().addWidget(name)
-
-
-if __name__ == "__main__":
-    app = qtw.QApplication(sys.argv)
-    gui = GuiSetup()
-    gui.show()
-    app.exec_()

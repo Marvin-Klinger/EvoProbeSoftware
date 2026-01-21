@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
+from src.GuiSequence import GuiSequence
 from src.GuiSequenceSelect import GuiSequenceSelect
 from src.GuiSetup import GuiSetup
 
@@ -28,6 +29,11 @@ class GuiMain(qtw.QMainWindow):
         window = GuiSetup(self)
         self.setCentralWidget(window)
         self.setWindowTitle("Setup")
+
+    def load_sequence(self):
+        window = GuiSequence(self, None, [])
+        self.setCentralWidget(window)
+        self.setWindowTitle("Sequence")
 
 
 # starts the MainWindow for the rest of the windows

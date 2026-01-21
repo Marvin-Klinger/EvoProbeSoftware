@@ -33,15 +33,10 @@ class GuiSequenceSelect(qtw.QWidget):
         self.layout().addWidget(sequence_holder)
 
         sequence1 = qtw.QPushButton("Seq1\nΔTemp")
+        sequence1.clicked.connect(self.main_window.load_sequence)
         grid_layout.addWidget(sequence1, 0, 0)
         sequence2 = qtw.QPushButton("Seq2\nΔField")
+        sequence2.clicked.connect(self.main_window.load_sequence)
         grid_layout.addWidget(sequence2, 0, 1)
 
         self.layout().addStretch()
-
-
-if __name__ == "__main__":
-    app = qtw.QApplication(sys.argv)
-    gui = GuiSequenceSelect()
-    gui.show()
-    app.exec_()
