@@ -7,19 +7,31 @@ from PyQt5.QtCore import Qt
 
 class GuiSequenceSelect(qtw.QWidget):
 
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_window = main_window
 
         self.setFont(qtg.QFont("Bahnschrift", 16))
         self.setLayout(qtw.QVBoxLayout())
-        setup_btn = qtw.QPushButton("Setup")
-        setup_btn.setFixedWidth(setup_btn.sizeHint().width())
-        self.layout().addWidget(setup_btn)
 
+        # Topbar Section
+        topbar_holder = qtw.QWidget()
+        topbar_layout = qtw.QHBoxLayout()
+        topbar_holder.setLayout(topbar_layout)
+        self.layout().addWidget(topbar_holder)
+
+        topbar_layout.addStretch()
+        setup_btn = qtw.QPushButton("Setup")
+        # setup_btn.setFixedWidth(setup_btn.sizeHint().width())
+        setup_btn.clicked.connect(main_window.load_setup_window)
+        topbar_layout.addWidget(setup_btn)
+
+        # Sequence Section
         sequence_holder = qtw.QWidget()
         grid_layout = qtw.QGridLayout()
         sequence_holder.setLayout(grid_layout)
         self.layout().addWidget(sequence_holder)
+
         sequence1 = qtw.QPushButton("Seq1\nΔTemp")
         grid_layout.addWidget(sequence1, 0, 0)
         sequence2 = qtw.QPushButton("Seq2\nΔField")

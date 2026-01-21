@@ -5,6 +5,7 @@ from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
 from src.GuiSequenceSelect import GuiSequenceSelect
+from src.GuiSetup import GuiSetup
 
 
 class GuiMain(qtw.QMainWindow):
@@ -13,13 +14,20 @@ class GuiMain(qtw.QMainWindow):
         super().__init__()
 
         self.setFont(qtg.QFont("Bahnschrift", 16))
+        self.setGeometry(600, 200, 400, 0)
         self.setCentralWidget(qtw.QLabel("Hi"))
         self.load_sequence_select_window()
         self.show()
 
     def load_sequence_select_window(self):
-        window = GuiSequenceSelect()
+        window = GuiSequenceSelect(self)
         self.setCentralWidget(window)
+        self.setWindowTitle("Sequences")
+
+    def load_setup_window(self):
+        window = GuiSetup(self)
+        self.setCentralWidget(window)
+        self.setWindowTitle("Setup")
 
 
 # starts the MainWindow for the rest of the windows

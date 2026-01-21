@@ -8,12 +8,24 @@ from PyQt5.QtWidgets import QPushButton
 
 class GuiSetup(qtw.QWidget):
 
-    def __init__(self):
+    def __init__(self, main_window):
         super().__init__()
+        self.main_window = main_window
 
         self.setFont(qtg.QFont("Bahnschrift", 16))
         self.setLayout(qtw.QVBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
+
+        # Topbar Section
+        topbar_holder = qtw.QWidget()
+        topbar_layout = qtw.QHBoxLayout()
+        topbar_holder.setLayout(topbar_layout)
+        self.layout().addWidget(topbar_holder)
+
+        back_btn = qtw.QPushButton("↩")
+        back_btn.clicked.connect(self.main_window.load_sequence_select_window)
+        topbar_layout.addWidget(back_btn)
+        topbar_layout.addStretch()
 
         # Serial Section
         serial_holder = qtw.QWidget()
@@ -57,8 +69,7 @@ class GuiSetup(qtw.QWidget):
         control_hbox.layout().addWidget(ppms_btn)
         dynacool_btn = QPushButton("DynaCool")
         control_hbox.layout().addWidget(dynacool_btn)
-
-        control_holder.setFixedWidth(control_holder.sizeHint().width())
+        control_hbox.layout().addStretch()
 
         # Measurement Device Section
         measurement_holder = qtw.QWidget()
@@ -104,13 +115,13 @@ class GuiSetup(qtw.QWidget):
         config_form.addRow(title_config)
 
         slot1 = qtw.QComboBox()
-        config_form.addRow(" Slot 1", slot1)
+        config_form.addRow(" Slot 1 ", slot1)
 
         slot2 = qtw.QComboBox()
-        config_form.addRow(" Slot 2", slot2)
+        config_form.addRow(" Slot 2 ", slot2)
 
         slot3 = qtw.QComboBox()
-        config_form.addRow(" Slot 3", slot3)
+        config_form.addRow(" Slot 3 ", slot3)
 
         config_holder.setFixedWidth(config_holder.sizeHint().width())
 
