@@ -5,6 +5,7 @@ import numpy as np
 
 import threading
 
+from src.ExtraClasses import DeviceInfo
 from src.MeasurementDevice import MeasurementDevice
 
 
@@ -18,7 +19,7 @@ class MPVWrapper(MeasurementDevice):
         self.lock = threading.Lock()
 
         self.last_values = {}
-        self.info = None
+        self.info = DeviceInfo(name="MPV", version=0)
         self.calibration = None
         self.keys = ["temperature", "field"]
         self.logging_keys = ["temp", "field"]
@@ -51,6 +52,7 @@ class MPVWrapper(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
+        print("try connecting")
         try:
             self.server = mpv.Server()
             self.client = mpv.Client()
@@ -58,10 +60,14 @@ class MPVWrapper(MeasurementDevice):
             self.client.open()
         except:
             self.connected = False
+            print("connection to mpv not possible")
             return
         self.connected = True
 
     def get_temperature(self):
+        if not self.connected:
+            return np.nan
+
         self.lock.acquire(blocking=True)
         value = np.nan
         try:
@@ -72,6 +78,9 @@ class MPVWrapper(MeasurementDevice):
         return value
 
     def get_field(self):
+        if not self.connected:
+            return np.nan
+
         self.lock.acquire(blocking=True)
         value = np.nan
         try:

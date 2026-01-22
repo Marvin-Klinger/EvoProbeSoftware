@@ -5,6 +5,7 @@ from lakeshore import Model372, Model372InputSetupSettings
 
 from src.LakeshoreDevice import LakeshoreDevice
 from src.MeasurementDevice import MeasurementDevice
+from src.ExtraClasses import DeviceInfo
 
 
 class LakeshoreChannel(MeasurementDevice):
@@ -21,14 +22,15 @@ class LakeshoreChannel(MeasurementDevice):
         self.keys = ["kelvin", "resistance", "power"]
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
+        self.info = DeviceInfo(name=f"Channel {self.input_channel.name}", version=0)
 
         self.last_reading = {"kelvin": np.nan, "resistance": np.nan, "power": np.nan}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
     # TODO: add calibration
     def get_readings(self):
-        if (self.input_channel == Model372.InputChannel.CONTROL
-                or self.lakeshore.is_ready and self.lakeshore.current_channel == self.input_channel):
+        if self.connected and (self.input_channel == Model372.InputChannel.CONTROL or
+                               self.lakeshore.is_ready and self.lakeshore.current_channel == self.input_channel):
             self.last_reading = self.lakeshore.get_readings(self.input_channel)
             return self.last_reading
         else:
@@ -48,12 +50,8 @@ class LakeshoreChannel(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        try:
-            self.lakeshore.connect()
-        except:
-            self.connected = False
-            return
-        self.connected = True
+        self.lakeshore.connect()
+        self.connected = self.lakeshore.connected
 
 
 if __name__ == "__main__":

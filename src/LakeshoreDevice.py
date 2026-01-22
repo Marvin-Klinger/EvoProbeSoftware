@@ -23,6 +23,7 @@ class LakeshoreDevice:
         self.current_channel = None
         self.is_ready = False
         self.is_cycling = False
+        self.connected = False
 
         self.info = None
 
@@ -31,7 +32,7 @@ class LakeshoreDevice:
     def initialize(self):
         self.connect()
         self.scanner_queue.extend([c for c in self.input_channels if c != Model372.InputChannel.CONTROL])
-        if len(self.scanner_queue):
+        if len(self.scanner_queue) and self.connected:
             self.set_next_scanner_position()
 
     # starts changing scanner position every scanner_interval
@@ -87,6 +88,7 @@ class LakeshoreDevice:
 
         if LakeshoreDevice.DEBUG_MODE:
             self.lakeshore = Model372Mock(baud_rate=None)
+            self.connected = True
             return
 
         try:
@@ -99,6 +101,8 @@ class LakeshoreDevice:
             except:
                 print("still couldn't connect to lakeshore\n"
                       "aborting process")
+                self.connected = False
+        self.connected = True
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from src.GuiSequence import GuiSequence
 from src.GuiSequenceSelect import GuiSequenceSelect
 from src.GuiSetup import GuiSetup
+from src.MPVWrapper import MPVWrapper
 
 
 class GuiMain(qtw.QMainWindow):
@@ -31,7 +32,7 @@ class GuiMain(qtw.QMainWindow):
         self.setWindowTitle("Setup")
 
     def load_sequence(self):
-        window = GuiSequence(self, None, [])
+        window = GuiSequence(self, None, [MPVWrapper()])
         self.setCentralWidget(window)
         self.setWindowTitle("Sequence")
 
