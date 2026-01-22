@@ -13,8 +13,8 @@ class MPVWrapper(MeasurementDevice):
     def __init__(self):
         super().__init__()
 
-        self.server = mpv.Server()
-        self.client = mpv.Client()
+        self.server = None
+        self.client = None
         self.lock = threading.Lock()
 
         self.last_values = {}
@@ -51,8 +51,15 @@ class MPVWrapper(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        self.server.open()
-        self.client.open()
+        try:
+            self.server = mpv.Server()
+            self.client = mpv.Client()
+            self.server.open()
+            self.client.open()
+        except:
+            self.connected = False
+            return
+        self.connected = True
 
     def get_temperature(self):
         self.lock.acquire(blocking=True)

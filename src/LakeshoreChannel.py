@@ -48,7 +48,12 @@ class LakeshoreChannel(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        self.lakeshore.connect()
+        try:
+            self.lakeshore.connect()
+        except:
+            self.connected = False
+            return
+        self.connected = True
 
 
 if __name__ == "__main__":

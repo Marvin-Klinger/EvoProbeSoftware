@@ -8,6 +8,7 @@ class MeasurementDevice:
         self.keys = []
         self.logging_keys = []
         self.plotting_keys = []
+        self.connected = False
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
