@@ -4,6 +4,8 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
+from src.ExtraClasses import MeasurementDeviceType as mdType
+
 
 class GuiSetup(qtw.QWidget):
 
@@ -82,25 +84,29 @@ class GuiSetup(qtw.QWidget):
         measurement_form.addRow(title_measurement)
 
         measurement_gbox = qtw.QWidget()
-        measurement_grid = qtw.QGridLayout()
-        measurement_gbox.setLayout(measurement_grid)
+        self.measurement_grid = qtw.QGridLayout()
+        measurement_gbox.setLayout(self.measurement_grid)
         measurement_form.addRow(measurement_gbox)
-        card_count = 0
-        measurement_grid.setColumnStretch(4, 1)
+        self.card_count = 0
+        self.measurement_grid.setColumnStretch(4, 1)
 
         card1 = DeviceCard({"name": "PPMS"})
         card2 = DeviceCard({"name": "Lakeshore"})
         card3 = DeviceCard({"name": "Device"})
 
+        self.cards = []
         for card in [card1, card2, card3]:
-            measurement_grid.addWidget(card, card_count // 4, card_count % 4)
-            card_count += 1
+            self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
+            self.cards.append(card)
+            self.card_count += 1
 
         add_btn = qtw.QPushButton("+")
-        add_btn.setFont(qtg.QFont("Bahnschrift", 30,))
+        add_btn.setFont(qtg.QFont("Bahnschrift", 30, ))
         add_btn.setFixedSize(60, 60)
-        measurement_grid.addWidget(add_btn, card_count // 4, card_count % 4)
-        card_count += 1
+        add_btn.clicked.connect(self.open_add_device_dialog)
+        self.measurement_grid.addWidget(add_btn, self.card_count // 4, self.card_count % 4)
+        self.cards.append(add_btn)
+        self.card_count += 1
 
         # Config Section
         config_holder = qtw.QWidget()
@@ -126,6 +132,34 @@ class GuiSetup(qtw.QWidget):
 
         self.layout().addStretch()
 
+    def open_add_device_dialog(self):
+        dlg = qtw.QDialog(self)
+        dlg.setWindowTitle("New")
+        dlg.setFont(qtg.QFont("Bahnschrift", 16))
+        dlg_layout = qtw.QVBoxLayout()
+        dlg.setLayout(dlg_layout)
+        for md_type in mdType:
+            md_btn = qtw.QPushButton(md_type.name)
+
+            def select_device(t):
+                self.add_device(t)
+                dlg.close()
+
+            md_btn.clicked.connect(lambda x, y=md_type: select_device(y))
+            dlg_layout.addWidget(md_btn)
+        dlg.exec()
+
+    def add_device(self, md_type: mdType):
+        print(md_type)
+        card = DeviceCard({"name": md_type.name})
+        self.card_count -= 1
+        self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
+        self.card_count += 1
+        add_btn = self.cards.pop()
+        self.cards.append(card)
+        self.measurement_grid.addWidget(add_btn, self.card_count // 4, self.card_count % 4)
+        self.cards.append(add_btn)
+        self.card_count += 1
 
 # Used to display added MeasurementDevice info and options
 class DeviceCard(qtw.QFrame):
