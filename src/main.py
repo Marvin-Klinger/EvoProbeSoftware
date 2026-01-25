@@ -1,5 +1,6 @@
 import src.GuiMain as GuiMain
+from src.Controller import Controller
 
 
 if __name__ == '__main__':
-    GuiMain.show_gui()
+    controller = Controller()

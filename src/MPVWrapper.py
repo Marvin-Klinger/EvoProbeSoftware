@@ -73,7 +73,8 @@ class MPVWrapper(MeasurementDevice):
         try:
             value = self.client.get_temperature()[0]
         except Exception:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
+            print("couldn't read mpv temperature")
         self.lock.release()
         return value
 
@@ -86,7 +87,8 @@ class MPVWrapper(MeasurementDevice):
         try:
             value = self.client.get_field()[0]
         except Exception:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
+            print("couldn't read mpv field")
         self.lock.release()
         return value
 

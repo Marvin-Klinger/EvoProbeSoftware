@@ -62,7 +62,6 @@ class GuiSequence(qtw.QWidget):
         preview_layout.addRow(devices_holder)
 
         for device in self.devices:
-            print("creating preview")
             device_holder = qtw.QWidget()
             device_layout = qtw.QFormLayout()
             device_holder.setLayout(device_layout)
@@ -71,13 +70,9 @@ class GuiSequence(qtw.QWidget):
             device_name = qtw.QLabel(device.info.name)
             device_layout.addRow(device_name)
 
-            print("getting readings")
             readings = device.get_logging_readings()
             print(readings)
-            print("got readings")
             for i, key in enumerate(device.logging_keys):
                 device_layout.addRow(f"{key}: ", qtw.QLabel(str(readings[i])))
 
         self.layout().addStretch()
-
-        print("finished")
