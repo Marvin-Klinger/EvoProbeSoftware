@@ -90,7 +90,6 @@ class GuiSetup(qtw.QWidget):
         self.measurement_grid.setColumnStretch(4, 1)
 
         self.cards = []
-        print(self.cards)
         for data in FileHandler.get_setup_json()["devices"]:
             card = DeviceCard(data, self)
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
@@ -158,6 +157,26 @@ class GuiSetup(qtw.QWidget):
         self.card_count += 1
         self.save_setup_settings()
 
+    def remove_device(self, device: qtw.QFrame):
+        dlg = qtw.QMessageBox(self)
+        dlg.setFont(qtg.QFont("Bahnschrift", 16))
+        dlg.setWindowTitle("delete")
+        dlg.setText(f"Delete {device.type.name}?")
+        dlg.setStandardButtons(qtw.QMessageBox.Yes | qtw.QMessageBox.No)
+        dlg.setIcon(qtw.QMessageBox.Question)
+        button = dlg.exec()
+        if button != qtw.QMessageBox.Yes:
+            return
+
+        device.hide()
+        self.card_count = self.cards.index(device)
+        self.cards.remove(device)
+        for card in self.cards[self.card_count:]:
+            self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
+            self.card_count += 1
+        device.deleteLater()
+        self.save_setup_settings()
+
     def save_setup_settings(self):
         data = {
             "devices": [card.get_data() for card in self.cards[:-1]]
@@ -174,6 +193,7 @@ class DeviceCard(qtw.QFrame):
         self.type = mdType(data["type"])
         self.gui_setup = gui_setup
 
+        # self.setFixedWidth(250)
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setSpacing(0)
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -199,6 +219,7 @@ class DeviceCard(qtw.QFrame):
         remove_btn = qtw.QPushButton("⨉")
         remove_btn.setFixedSize(*btn_size)
         remove_btn.setContentsMargins(0, 0, 0, 0)
+        remove_btn.clicked.connect(lambda: self.gui_setup.remove_device(self))
         topbar.layout().addWidget(remove_btn)
 
         name = qtw.QLabel(self.type.name)
