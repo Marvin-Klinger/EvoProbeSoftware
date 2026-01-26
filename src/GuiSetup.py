@@ -1,10 +1,9 @@
-import sys
-
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
 from src.ExtraClasses import MeasurementDeviceType as mdType
+import src.FileHandler as FileHandler
 
 
 class GuiSetup(qtw.QWidget):
@@ -90,12 +89,10 @@ class GuiSetup(qtw.QWidget):
         self.card_count = 0
         self.measurement_grid.setColumnStretch(4, 1)
 
-        card1 = DeviceCard({"name": "PPMS"})
-        card2 = DeviceCard({"name": "Lakeshore"})
-        card3 = DeviceCard({"name": "Device"})
-
         self.cards = []
-        for card in [card1, card2, card3]:
+        print(self.cards)
+        for data in FileHandler.get_setup_json()["devices"]:
+            card = DeviceCard(data, self)
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
             self.cards.append(card)
             self.card_count += 1
@@ -150,8 +147,7 @@ class GuiSetup(qtw.QWidget):
         dlg.exec()
 
     def add_device(self, md_type: mdType):
-        print(md_type)
-        card = DeviceCard({"name": md_type.name})
+        card = DeviceCard({"type": md_type.value}, self)
         self.card_count -= 1
         self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
         self.card_count += 1
@@ -160,12 +156,23 @@ class GuiSetup(qtw.QWidget):
         self.measurement_grid.addWidget(add_btn, self.card_count // 4, self.card_count % 4)
         self.cards.append(add_btn)
         self.card_count += 1
+        self.save_setup_settings()
+
+    def save_setup_settings(self):
+        data = {
+            "devices": [card.get_data() for card in self.cards[:-1]]
+        }
+        FileHandler.save_setup_json(data)
+
 
 # Used to display added MeasurementDevice info and options
 class DeviceCard(qtw.QFrame):
 
-    def __init__(self, data_json):
+    def __init__(self, data, gui_setup):
         super().__init__()
+
+        self.type = mdType(data["type"])
+        self.gui_setup = gui_setup
 
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setSpacing(0)
@@ -194,8 +201,13 @@ class DeviceCard(qtw.QFrame):
         remove_btn.setContentsMargins(0, 0, 0, 0)
         topbar.layout().addWidget(remove_btn)
 
-        name = qtw.QLabel(data_json["name"])
+        name = qtw.QLabel(self.type.name)
         name.setAlignment(Qt.AlignCenter)
         name.setFont(qtg.QFont("Bahnschrift", 30))
         name.setContentsMargins(20, 0, 20, 10)
         self.layout().addWidget(name)
+
+    def get_data(self):
+        return {
+            "type": self.type.value
+        }
