@@ -2,6 +2,9 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
+from lakeshore import Model372
+from itertools import chain
+
 from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
 
@@ -15,6 +18,7 @@ class GuiSetup(qtw.QWidget):
         self.setFont(qtg.QFont("Bahnschrift", 16))
         self.setLayout(qtw.QVBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
+        setup_json = FileHandler.get_setup_json()
 
         # Topbar Section
         topbar_holder = qtw.QWidget()
@@ -90,7 +94,7 @@ class GuiSetup(qtw.QWidget):
         self.measurement_grid.setColumnStretch(4, 1)
 
         self.cards = []
-        for data in FileHandler.get_setup_json()["devices"]:
+        for data in setup_json.get("devices", []):
             card = DeviceCard(data, self)
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
             self.cards.append(card)
@@ -99,7 +103,7 @@ class GuiSetup(qtw.QWidget):
         add_btn = qtw.QPushButton("+")
         add_btn.setFont(qtg.QFont("Bahnschrift", 30, ))
         add_btn.setFixedSize(60, 60)
-        add_btn.clicked.connect(self.open_add_device_dialog)
+        add_btn.clicked.connect(self.open_add_device)
         self.measurement_grid.addWidget(add_btn, self.card_count // 4, self.card_count % 4)
         self.cards.append(add_btn)
         self.card_count += 1
@@ -115,20 +119,26 @@ class GuiSetup(qtw.QWidget):
         title_config.setContentsMargins(0, 10, 0, 0)
         config_form.addRow(title_config)
 
-        slot1 = qtw.QComboBox()
-        config_form.addRow(" Slot 1 ", slot1)
+        self.slots = []
 
-        slot2 = qtw.QComboBox()
-        config_form.addRow(" Slot 2 ", slot2)
+        for i in range(1, 4):
+            slot = qtw.QComboBox()
+            slot.currentIndexChanged.connect(self.save_setup_settings)
+            config_form.addRow(f" Slot {i} ", slot)
+            self.slots.append(slot)
 
-        slot3 = qtw.QComboBox()
-        config_form.addRow(" Slot 3 ", slot3)
+        self.update_slots()
 
-        config_holder.setFixedWidth(config_holder.sizeHint().width())
+        print("slotting")
+        for i, slot in enumerate(setup_json.get("slots", [])):
+            print(i, slot)
+            self.slots[i].setCurrentIndex(slot.get("index", -1))
+
+        config_holder.setFixedWidth(300)
 
         self.layout().addStretch()
 
-    def open_add_device_dialog(self):
+    def open_add_device(self):
         dlg = qtw.QDialog(self)
         dlg.setWindowTitle("New")
         dlg.setFont(qtg.QFont("Bahnschrift", 16))
@@ -155,6 +165,7 @@ class GuiSetup(qtw.QWidget):
         self.measurement_grid.addWidget(add_btn, self.card_count // 4, self.card_count % 4)
         self.cards.append(add_btn)
         self.card_count += 1
+        self.update_slots()
         self.save_setup_settings()
 
     def remove_device(self, device: qtw.QFrame):
@@ -175,13 +186,29 @@ class GuiSetup(qtw.QWidget):
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
             self.card_count += 1
         device.deleteLater()
+        self.update_slots()
         self.save_setup_settings()
 
     def save_setup_settings(self):
+        print("saving")
         data = {
-            "devices": [card.get_data() for card in self.cards[:-1]]
+            "devices": [card.get_data() for card in self.cards[:-1]],
+            "slots": [{"index": slot.currentIndex(), "data": slot.currentData()} for slot in self.slots]
         }
+        print(data)
         FileHandler.save_setup_json(data)
+
+    def open_edit_device(self, device):
+        pass
+
+    def update_slots(self):
+        options = list(chain(*[card.get_channels() for card in self.cards[:-1]]))
+        for slot in self.slots:
+            # index = slot.currentIndex()
+            slot.clear()
+            for option in options:
+                slot.addItem(option["name"], option)
+            slot.setCurrentIndex(-1)
 
 
 # Used to display added MeasurementDevice info and options
@@ -232,3 +259,14 @@ class DeviceCard(qtw.QFrame):
         return {
             "type": self.type.value
         }
+
+    def get_channels(self):
+        match self.type:
+            case mdType.MPV:
+                return [{"device": self.type.value, "channel": self.type.value, "name": "Mpv"}]
+            case mdType.LAKESHORE:
+                return [{"device": self.type.value, "channel": Model372.InputChannel.CONTROL.value, "name": "Channel A"},
+                        {"device": self.type.value, "channel": Model372.InputChannel.ONE.value, "name": "Channel 1"},
+                        {"device": self.type.value, "channel": Model372.InputChannel.TWO.value, "name": "Channel 2"}]
+            case _:
+                return []
