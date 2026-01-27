@@ -29,8 +29,10 @@ class LakeshoreChannel(MeasurementDevice):
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
     # TODO: add calibration
     def get_readings(self):
-        if self.connected and (self.input_channel == Model372.InputChannel.CONTROL or
-                               self.lakeshore.is_ready and self.lakeshore.current_channel == self.input_channel):
+        if (self.lakeshore.connected and
+                (self.input_channel == Model372.InputChannel.CONTROL or
+                 self.lakeshore.is_ready and
+                 self.lakeshore.current_channel == self.input_channel)):
             self.last_reading = self.lakeshore.get_readings(self.input_channel)
             return self.last_reading
         else:

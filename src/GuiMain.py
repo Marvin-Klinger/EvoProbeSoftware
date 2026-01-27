@@ -32,9 +32,15 @@ class GuiMain(qtw.QMainWindow):
         self.setCentralWidget(window)
         self.setWindowTitle("Setup")
 
-    def load_sequence(self):
+    def load_sequence_window(self):
         self.controller.instantiate_devices()
         window = GuiSequence(self, None, self.controller.devices)
         self.setCentralWidget(window)
         self.setWindowTitle("Sequence")
+
+    def load_active_window(self):
+        self.controller.start_sequence()
+        window = qtw.QLabel("active")
+        self.setCentralWidget(window)
+        self.setWindowTitle("Running")
 

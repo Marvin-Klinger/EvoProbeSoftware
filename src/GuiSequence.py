@@ -30,6 +30,7 @@ class GuiSequence(qtw.QWidget):
         topbar_layout.addStretch()
 
         start_btn = qtw.QPushButton("GO!")
+        start_btn.clicked.connect(self.main_window.load_active_window)
         topbar_layout.addWidget(start_btn)
 
         # Setting Section

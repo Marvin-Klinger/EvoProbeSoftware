@@ -1,5 +1,7 @@
+import os
 import sys
 
+from src.DataHub import DataHub
 from src.GuiMain import GuiMain
 import src.FileHandler as FileHandler
 from src.ExtraClasses import MeasurementDeviceType as mdType
@@ -44,4 +46,10 @@ class Controller:
                 devices.append(channel)
         self.devices = devices
         print(self.devices)
+
+    # starts the data reading and logging process and selected sequence
+    def start_sequence(self):
+        save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "out.csv"))
+        datahub = DataHub(self.devices, save_path, self)
+        datahub.start_logging()
 
