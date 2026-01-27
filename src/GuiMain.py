@@ -12,8 +12,9 @@ from src.MPVWrapper import MPVWrapper
 
 class GuiMain(qtw.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, controller):
         super().__init__()
+        self.controller = controller
 
         self.setFont(qtg.QFont("Bahnschrift", 16))
         self.setGeometry(600, 200, 400, 0)
@@ -32,18 +33,8 @@ class GuiMain(qtw.QMainWindow):
         self.setWindowTitle("Setup")
 
     def load_sequence(self):
-        window = GuiSequence(self, None, [MPVWrapper()])
+        self.controller.instantiate_devices()
+        window = GuiSequence(self, None, self.controller.devices)
         self.setCentralWidget(window)
         self.setWindowTitle("Sequence")
 
-
-# starts the MainWindow for the rest of the windows
-def show_gui():
-    app = qtw.QApplication(sys.argv)
-    gui = GuiMain()
-    app.exec_()
-
-
-# just for testing ui
-if __name__ == "__main__":
-    show_gui()
