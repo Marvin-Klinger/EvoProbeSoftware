@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from src.GuiSequence import GuiSequence
 from src.GuiSequenceSelect import GuiSequenceSelect
 from src.GuiSetup import GuiSetup
+from src.GuiActive import GuiActive
 from src.MPVWrapper import MPVWrapper
 
 
@@ -40,7 +41,7 @@ class GuiMain(qtw.QMainWindow):
 
     def load_active_window(self):
         self.controller.start_sequence()
-        window = qtw.QLabel("active")
+        window = GuiActive(self, self.controller)
         self.setCentralWidget(window)
         self.setWindowTitle("Running")
 
