@@ -28,7 +28,7 @@ class MPVWrapper(MeasurementDevice):
         self.key_to_function = {"temperature": self.get_temperature,
                                 "field": self.get_field}
 
-        self.connect()
+        self.connect_async()
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -53,6 +53,7 @@ class MPVWrapper(MeasurementDevice):
     # establishes connection to the physical device
     def connect(self):
         print("try connecting")
+        self.lock.acquire(blocking=True)
         try:
             self.server = mpv.Server()
             self.client = mpv.Client()
@@ -61,8 +62,10 @@ class MPVWrapper(MeasurementDevice):
         except:
             self.connected = False
             print("connection to mpv not possible")
+            self.lock.release()
             return
         self.connected = True
+        self.lock.release()
 
     def get_temperature(self):
         if not self.connected:

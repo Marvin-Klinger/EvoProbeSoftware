@@ -1,4 +1,5 @@
 from enum import Enum
+from threading import Thread
 
 
 class MeasurementDevice:
@@ -31,4 +32,9 @@ class MeasurementDevice:
     # establishes connection to the physical device
     def connect(self):
         pass
+
+    # connects to the devices asynchronously to not freeze the GUI
+    def connect_async(self):
+        t = Thread(target=self.connect, daemon=True)
+        t.start()
 

@@ -5,7 +5,7 @@ from lakeshore import Model372
 from Model372Mock import Model372Mock, Model372InputSetupSettings
 
 from collections import deque
-from threading import Thread
+from threading import Thread, Lock
 from itertools import chain
 
 
@@ -24,16 +24,24 @@ class LakeshoreDevice:
         self.is_ready = False
         self.is_cycling = False
         self.connected = False
+        self.lock = Lock()
 
         self.info = None
 
-        self.initialize()
+        self.initialize_async()
 
     def initialize(self):
         self.connect()
         self.scanner_queue.extend([c for c in self.input_channels if c != Model372.InputChannel.CONTROL])
+        self.lock.acquire(blocking=True)
         if len(self.scanner_queue) and self.connected:
             self.set_next_scanner_position()
+        self.lock.release()
+
+    # initializes the lakeshore asynchronously to not freeze the GUI
+    def initialize_async(self):
+        t = Thread(target=self.initialize, daemon=True)
+        t.start()
 
     # starts changing scanner position every scanner_interval
     def start_scanner_cycle(self):
@@ -84,13 +92,16 @@ class LakeshoreDevice:
     # establishes connection to the physical device
     def connect(self):
         print("connecting to lakeshore ...")
+        self.lock.acquire(blocking=True)
         if self.lakeshore is not None:
+            self.lock.release()
             return
 
         if LakeshoreDevice.DEBUG_MODE:
             self.lakeshore = Model372Mock(baud_rate=None)
             self.connected = True
             print("connection successful")
+            self.lock.release()
             return
 
         try:
@@ -104,8 +115,11 @@ class LakeshoreDevice:
                 print("still couldn't connect to lakeshore\n"
                       "aborting process")
                 self.connected = False
+                self.lock.release()
+                return
         self.connected = True
         print("connection successful")
+        self.lock.release()
 
 
 if __name__ == "__main__":
