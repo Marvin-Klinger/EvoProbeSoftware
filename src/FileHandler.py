@@ -2,6 +2,7 @@ import json
 import os
 
 SETUP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "setup.json"))
+USER_DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "user_data.json"))
 
 
 def get_json(path):
@@ -35,4 +36,16 @@ def get_setup_json():
 
 
 def save_setup_json(data):
+    save_json(SETUP_PATH, data)
+
+
+def get_user_data_json():
+    data = get_json(SETUP_PATH)
+    if len(data):
+        return data
+    else:
+        return {"save_path": os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "out.csv"))}
+
+
+def save_user_data_json(data):
     save_json(SETUP_PATH, data)

@@ -49,8 +49,7 @@ class Controller:
         print(self.devices)
 
     # starts the data reading and logging process and selected sequence
-    def start_sequence(self):
-        save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "out.csv"))
+    def start_sequence(self, save_path):
         self.datahub = DataHub(self.devices, save_path, self)
         self.datahub.start_logging()
 

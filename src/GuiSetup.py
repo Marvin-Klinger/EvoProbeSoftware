@@ -51,7 +51,7 @@ class GuiSetup(qtw.QWidget):
         rod_select.addItem("Rod 2")
         serial_form.addRow(" Rod ", rod_select)
 
-        serial_holder.setFixedWidth(serial_holder.sizeHint().width())
+        serial_holder.setFixedWidth(serial_holder.sizeHint().width()+20)
 
         # Control Device Section
         control_holder = qtw.QWidget()
