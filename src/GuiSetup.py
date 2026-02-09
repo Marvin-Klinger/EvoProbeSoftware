@@ -54,26 +54,26 @@ class GuiSetup(qtw.QWidget):
         serial_holder.setFixedWidth(serial_holder.sizeHint().width()+20)
 
         # Control Device Section
-        control_holder = qtw.QWidget()
-        control_form = qtw.QFormLayout()
-        control_holder.setLayout(control_form)
-        self.layout().addWidget(control_holder)
-
-        title_control = qtw.QLabel("Control Device")
-        title_control.setFont(qtg.QFont("Bahnschrift", 20))
-        title_control.setContentsMargins(0, 10, 0, 0)
-        control_form.addRow(title_control)
-
-        control_hbox = qtw.QWidget()
-        control_hbox.setLayout(qtw.QHBoxLayout())
-        control_hbox.layout().setContentsMargins(10, 0, 0, 0)
-        control_form.addRow(control_hbox)
-
-        ppms_btn = qtw.QPushButton("PPMS")
-        control_hbox.layout().addWidget(ppms_btn)
-        dynacool_btn = qtw.QPushButton("DynaCool")
-        control_hbox.layout().addWidget(dynacool_btn)
-        control_hbox.layout().addStretch()
+        # control_holder = qtw.QWidget()
+        # control_form = qtw.QFormLayout()
+        # control_holder.setLayout(control_form)
+        # self.layout().addWidget(control_holder)
+        #
+        # title_control = qtw.QLabel("Control Device")
+        # title_control.setFont(qtg.QFont("Bahnschrift", 20))
+        # title_control.setContentsMargins(0, 10, 0, 0)
+        # control_form.addRow(title_control)
+        #
+        # control_hbox = qtw.QWidget()
+        # control_hbox.setLayout(qtw.QHBoxLayout())
+        # control_hbox.layout().setContentsMargins(10, 0, 0, 0)
+        # control_form.addRow(control_hbox)
+        #
+        # ppms_btn = qtw.QPushButton("PPMS")
+        # control_hbox.layout().addWidget(ppms_btn)
+        # dynacool_btn = qtw.QPushButton("DynaCool")
+        # control_hbox.layout().addWidget(dynacool_btn)
+        # control_hbox.layout().addStretch()
 
         # Measurement Device Section
         measurement_holder = qtw.QWidget()

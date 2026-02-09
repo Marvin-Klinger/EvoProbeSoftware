@@ -43,7 +43,7 @@ class Model372Mock(Model372):
         return {}
 
     def set_scanner_status(self, input_channel, status):
-        print("settings scanner")
+        # print("settings scanner")
         Model372Mock.SCANNER = input_channel
         pass
 

@@ -18,7 +18,7 @@ class LakeshoreChannel(MeasurementDevice):
         self.lakeshore = lakeshore
         self.input_channel = input_channel
         self.calibration = calibration
-        # TODO: is quadrature needed?
+        # TODO: is quadrature needed? Yes
         self.keys = ["kelvin", "resistance", "power"]
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
