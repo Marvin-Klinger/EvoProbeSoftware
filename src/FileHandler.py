@@ -3,6 +3,7 @@ import os
 
 SETUP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "setup.json"))
 USER_DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "user_data.json"))
+PUCK_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "pucks"))
 
 
 def get_json(path):
@@ -49,3 +50,9 @@ def get_user_data_json():
 
 def save_user_data_json(data):
     save_json(SETUP_PATH, data)
+
+
+def get_pucks():
+    files = [file for file in os.listdir(PUCK_DIR_PATH) if file.endswith(".json")]
+    pucks = [get_json(os.path.join(PUCK_DIR_PATH, file)) for file in files]
+    return pucks
