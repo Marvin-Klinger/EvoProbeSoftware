@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from lakeshore import Model372
 from itertools import chain
 
+import DefaultSettings
 from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
 
@@ -41,9 +42,11 @@ class GuiSetup(qtw.QWidget):
         title_serial.setFont(qtg.QFont("Bahnschrift", 20))
         serial_form.addRow(title_serial)
 
+
+        pucks = [DefaultSettings.PUCK_SETTINGS] + FileHandler.get_pucks()
         puck_select = qtw.QComboBox()
-        puck_select.addItem("Puck 1")
-        puck_select.addItem("Puck 2")
+        for i, puck in enumerate(pucks):
+            puck_select.addItem(puck["id"], i)
         serial_form.addRow(" Puck ", puck_select)
 
         rod_select = qtw.QComboBox()
@@ -121,10 +124,10 @@ class GuiSetup(qtw.QWidget):
 
         self.slots = []
 
-        for i in range(1, 4):
+        for i in range(pucks[puck_select.currentData()].get("n_of_slots", 1)):
             slot = qtw.QComboBox()
             slot.currentIndexChanged.connect(self.save_setup_settings)
-            config_form.addRow(f" Slot {i} ", slot)
+            config_form.addRow(f" Slot {i+1} ", slot)
             self.slots.append(slot)
 
         self.update_slots()
@@ -134,9 +137,30 @@ class GuiSetup(qtw.QWidget):
             print(i, slot)
             self.slots[i].setCurrentIndex(slot.get("index", -1))
 
-        config_holder.setFixedWidth(300)
+        config_holder.setFixedWidth(350)
 
         self.layout().addStretch()
+
+        # Method Section (methods that have dependencies from later sections)
+        def change_puck(index):
+            print(index)
+            n_of_slots = pucks[index].get("n_of_slots", 1)
+            for i in range(len(self.slots) - n_of_slots):
+                slot = self.slots.pop()
+                label = config_form.labelForField(slot)
+                label.hide()
+                label.deleteLater()
+                slot.hide()
+                slot.deleteLater()
+
+            for i in range(n_of_slots - len(self.slots)):
+                slot = qtw.QComboBox()
+                slot.currentIndexChanged.connect(self.save_setup_settings)
+                config_form.addRow(f" Slot {i+n_of_slots} ", slot)
+                self.slots.append(slot)
+            self.update_slots()
+
+        puck_select.currentIndexChanged.connect(change_puck)
 
     def open_add_device(self):
         dlg = qtw.QDialog(self)
@@ -201,6 +225,7 @@ class GuiSetup(qtw.QWidget):
     def open_edit_device(self, device):
         pass
 
+    # TODO: remember old index if possible
     def update_slots(self):
         options = list(chain(*[card.get_channels() for card in self.cards[:-1]]))
         for slot in self.slots:
