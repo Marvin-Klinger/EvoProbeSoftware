@@ -16,3 +16,14 @@ LAKESHORE_FILTER_SETTINGS = (
     None,   # settle_time
     None    # window
 )
+
+# Default Puck
+PUCK_SETTINGS = {
+    "id": "default",
+    "n_of_slots": 3,
+    "slots": [
+        {},
+        {},
+        {}
+    ]
+}
