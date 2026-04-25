@@ -1,4 +1,5 @@
 from lakeshore import Model372InputSetupSettings
+from PyQt5 import QtGui as qtg
 
 # Lakeshore settings
 LAKESHORE_CHANNEL_SETTINGS = Model372InputSetupSettings(
@@ -27,3 +28,7 @@ PUCK_SETTINGS = {
         {}
     ]
 }
+
+# Default Gui Settings
+FONT = qtg.QFont("Bahnschrift", 16)
+
