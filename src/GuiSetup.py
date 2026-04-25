@@ -8,9 +8,14 @@ from itertools import chain
 import DefaultSettings
 from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
+from MeasurementDevice import MeasurementDevice
 
 
 class GuiSetup(qtw.QWidget):
+
+    DEVICES = {
+        mdType.DUMMY: MeasurementDevice
+    }
 
     def __init__(self, main_window):
         super().__init__()
@@ -42,7 +47,6 @@ class GuiSetup(qtw.QWidget):
         title_serial.setFont(qtg.QFont("Bahnschrift", 20))
         serial_form.addRow(title_serial)
 
-
         pucks = [DefaultSettings.PUCK_SETTINGS] + FileHandler.get_pucks()
         puck_select = qtw.QComboBox()
         for i, puck in enumerate(pucks):
@@ -54,7 +58,7 @@ class GuiSetup(qtw.QWidget):
         rod_select.addItem("Rod 2")
         serial_form.addRow(" Rod ", rod_select)
 
-        serial_holder.setFixedWidth(serial_holder.sizeHint().width()+20)
+        serial_holder.setFixedWidth(serial_holder.sizeHint().width() + 20)
 
         # Control Device Section
         # control_holder = qtw.QWidget()
@@ -96,9 +100,11 @@ class GuiSetup(qtw.QWidget):
         self.card_count = 0
         self.measurement_grid.setColumnStretch(4, 1)
 
+        print("loading cards")
         self.cards = []
         for data in setup_json.get("devices", []):
-            card = DeviceCard(data, self)
+            GuiSetup.DEVICES[mdType(data["type"])].test()
+            card = GuiSetup.DEVICES[mdType(data["type"])].get_card(self)
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
             self.cards.append(card)
             self.card_count += 1
@@ -112,6 +118,7 @@ class GuiSetup(qtw.QWidget):
         self.card_count += 1
 
         # Config Section
+        print("loading config section")
         config_holder = qtw.QWidget()
         config_form = qtw.QFormLayout()
         config_holder.setLayout(config_form)
@@ -123,21 +130,32 @@ class GuiSetup(qtw.QWidget):
         config_form.addRow(title_config)
 
         self.slots = []
+        self.slot_selections = []
+        self.options = []
 
         for i in range(pucks[puck_select.currentData()].get("n_of_slots", 1)):
-            slot = qtw.QComboBox()
-            slot.currentIndexChanged.connect(self.save_setup_settings)
-            config_form.addRow(f" Slot {i+1} ", slot)
-            self.slots.append(slot)
+            row = qtw.QWidget()
+            row.setLayout(qtw.QHBoxLayout())
+            row.layout().setContentsMargins(0, 0, 0, 0)
+            config_form.addRow(f" Slot {i + 1} ", row)
+            device = qtw.QComboBox()
+            # device.currentIndexChanged.connect(self.save_setup_settings)
+            device.setFixedWidth(150)
+            row.layout().addWidget(device)
+            extra = qtw.QWidget()
+            row.layout().addWidget(extra)
+            self.slots.append({"row": row, "device": device, "extra": extra})
 
+        print("updating slots")
         self.update_slots()
 
-        print("slotting")
-        for i, slot in enumerate(setup_json.get("slots", [])):
-            print(i, slot)
-            self.slots[i].setCurrentIndex(slot.get("index", -1))
+        # print("slotting")
+        # for i, slot in enumerate(setup_json.get("slots", [])):
+        #     print(i, slot)
+        #     self.slots[i].setCurrentIndex(slot.get("index", -1))
+        #     # self.slot_selections.append(self.slots[i].currentData())
 
-        config_holder.setFixedWidth(350)
+        # config_holder.setFixedWidth(350)
 
         self.layout().addStretch()
 
@@ -156,7 +174,7 @@ class GuiSetup(qtw.QWidget):
             for i in range(n_of_slots - len(self.slots)):
                 slot = qtw.QComboBox()
                 slot.currentIndexChanged.connect(self.save_setup_settings)
-                config_form.addRow(f" Slot {i+n_of_slots} ", slot)
+                config_form.addRow(f" Slot {i + n_of_slots} ", slot)
                 self.slots.append(slot)
             self.update_slots()
 
@@ -180,7 +198,7 @@ class GuiSetup(qtw.QWidget):
         dlg.exec()
 
     def add_device(self, md_type: mdType):
-        card = DeviceCard({"type": md_type.value}, self)
+        card = GuiSetup.DEVICES[md_type].get_card(self)
         self.card_count -= 1
         self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
         self.card_count += 1
@@ -219,79 +237,37 @@ class GuiSetup(qtw.QWidget):
             "devices": [card.get_data() for card in self.cards[:-1]],
             "slots": [{"index": slot.currentIndex(), "data": slot.currentData()} for slot in self.slots]
         }
+        self.slot_selections = [slot.currentData() for slot in self.slots]
+        print(self.slot_selections)
         print(data)
         FileHandler.save_setup_json(data)
 
     def open_edit_device(self, device):
         pass
 
-    # TODO: remember old index if possible
     def update_slots(self):
-        options = list(chain(*[card.get_channels() for card in self.cards[:-1]]))
-        for slot in self.slots:
-            # index = slot.currentIndex()
-            slot.clear()
+        options = self.cards[:-1]
+        for i, slot in enumerate(self.slots):
+            try:
+                index = self.options.index(self.slot_selections[i])
+            except (ValueError, IndexError):
+                index = -1
+
+            row, device, extra = slot["row"], slot["device"], slot["extra"]
+            device.clear()
             for option in options:
-                slot.addItem(option["name"], option)
-            slot.setCurrentIndex(-1)
+                device.addItem(option.name, option)
+            device.setCurrentIndex(index)
+            device.setCurrentIndex(index)
+
+            extra.hide()
+            extra.deleteLater()
+            try:
+                extra = device.currentData().get_extra()
+            except AttributeError:
+                extra = qtw.QWidget()
+            row.layout().addWidget(extra)
+            slot["extra"] = extra
 
 
-# Used to display added MeasurementDevice info and options
-class DeviceCard(qtw.QFrame):
 
-    def __init__(self, data, gui_setup):
-        super().__init__()
-
-        self.type = mdType(data["type"])
-        self.gui_setup = gui_setup
-
-        # self.setFixedWidth(250)
-        self.setLayout(qtw.QVBoxLayout())
-        self.layout().setSpacing(0)
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.setFrameStyle(qtw.QFrame.StyledPanel | qtw.QFrame.Plain)
-        self.setLineWidth(3)
-
-        topbar = qtw.QWidget()
-        topbar.setLayout(qtw.QHBoxLayout())
-        topbar.layout().setContentsMargins(0, 0, 0, 0)
-        topbar.layout().setSpacing(0)
-        self.layout().addWidget(topbar)
-
-        btn_size = (30, 30)
-        info_btn = qtw.QPushButton("i")
-        info_btn.setFixedSize(*btn_size)
-        info_btn.setContentsMargins(0, 0, 0, 0)
-        topbar.layout().addWidget(info_btn)
-        topbar.layout().addStretch()
-        edit_btn = qtw.QPushButton("Ξ")
-        edit_btn.setFixedSize(*btn_size)
-        edit_btn.setContentsMargins(0, 0, 0, 0)
-        topbar.layout().addWidget(edit_btn)
-        remove_btn = qtw.QPushButton("⨉")
-        remove_btn.setFixedSize(*btn_size)
-        remove_btn.setContentsMargins(0, 0, 0, 0)
-        remove_btn.clicked.connect(lambda: self.gui_setup.remove_device(self))
-        topbar.layout().addWidget(remove_btn)
-
-        name = qtw.QLabel(self.type.name)
-        name.setAlignment(Qt.AlignCenter)
-        name.setFont(qtg.QFont("Bahnschrift", 30))
-        name.setContentsMargins(20, 0, 20, 10)
-        self.layout().addWidget(name)
-
-    def get_data(self):
-        return {
-            "type": self.type.value
-        }
-
-    def get_channels(self):
-        match self.type:
-            case mdType.MPV:
-                return [{"device": self.type.value, "channel": self.type.value, "name": "Mpv"}]
-            case mdType.LAKESHORE:
-                return [{"device": self.type.value, "channel": Model372.InputChannel.CONTROL.value, "name": "Channel A"},
-                        {"device": self.type.value, "channel": Model372.InputChannel.ONE.value, "name": "Channel 1"},
-                        {"device": self.type.value, "channel": Model372.InputChannel.TWO.value, "name": "Channel 2"}]
-            case _:
-                return []

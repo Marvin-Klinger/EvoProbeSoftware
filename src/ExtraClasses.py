@@ -10,6 +10,7 @@ class DeviceInfo:
 
 
 class MeasurementDeviceType(Enum):
-    LAKESHORE = 0
-    MPV = 1
+    DUMMY = 0
+    LAKESHORE = 1
+    MPV = 2
 
