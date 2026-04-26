@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 # stores metadata for device used for header
@@ -9,7 +9,7 @@ class DeviceInfo:
         self.version = version
 
 
-class MeasurementDeviceType(Enum):
+class MeasurementDeviceType(IntEnum):
     DUMMY = 0
     LAKESHORE = 1
     MPV = 2

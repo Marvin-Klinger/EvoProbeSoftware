@@ -21,7 +21,8 @@ def get_json(path):
 
 def save_json(path, data):
     directory = os.path.abspath(os.path.join(path, ".."))
-    if not os.path.exists(path):
+    if not os.path.exists(directory):
+        print("creating directory")
         os.mkdir(directory)
 
     with open(path, "w") as file:

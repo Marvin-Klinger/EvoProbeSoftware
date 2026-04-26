@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 import DefaultSettings as ds
+from ExtraClasses import MeasurementDeviceType as mdType
 
 
 class MeasurementDevice:
@@ -43,28 +44,25 @@ class MeasurementDevice:
         t.start()
 
     @staticmethod
-    def get_card(gui_setup):
+    def get_card(gui_setup, data=None):
         print("getting card")
-        return DeviceCard(gui_setup)
-
-    @staticmethod
-    def test():
-        print("testing")
+        return DeviceCard(gui_setup, data if data is not None else {})
 
 
 # Used to display added MeasurementDevice info and options
 class DeviceCard(qtw.QFrame):
     running_index = 0
 
-    def __init__(self, gui_setup):
+    def __init__(self, gui_setup, data):
         super().__init__()
 
-        print("init card")
         self.gui_setup = gui_setup
         self.id = DeviceCard.running_index
         DeviceCard.running_index += 1
-        self.name = "Dummy " + str(self.id)
         self.gui_elements = {}
+
+        self.type = mdType.DUMMY
+        self.name = data.get("name", "Dummy " + str(self.id))
 
         self.setMinimumWidth(200)
         self.setLayout(qtw.QVBoxLayout())
@@ -104,7 +102,7 @@ class DeviceCard(qtw.QFrame):
         self.gui_elements["name"] = name_label
 
     def get_data(self):
-        return None
+        return {"type": self.type, "name": self.name}
 
     def get_extra(self):
         return qtw.QWidget()

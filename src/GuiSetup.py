@@ -48,10 +48,15 @@ class GuiSetup(qtw.QWidget):
         serial_form.addRow(title_serial)
 
         pucks = [DefaultSettings.PUCK_SETTINGS] + FileHandler.get_pucks()
-        puck_select = qtw.QComboBox()
+        self.puck_select = qtw.QComboBox()
         for i, puck in enumerate(pucks):
-            puck_select.addItem(puck["id"], i)
-        serial_form.addRow(" Puck ", puck_select)
+            self.puck_select.addItem(puck["id"], i)
+        try:
+            index = [puck["id"] for puck in pucks].index(setup_json["puck"])
+        except (ValueError, KeyError):
+            index = 0
+        self.puck_select.setCurrentIndex(index)
+        serial_form.addRow(" Puck ", self.puck_select)
 
         rod_select = qtw.QComboBox()
         rod_select.addItem("Rod 1")
@@ -103,8 +108,7 @@ class GuiSetup(qtw.QWidget):
         print("loading cards")
         self.cards = []
         for data in setup_json.get("devices", []):
-            GuiSetup.DEVICES[mdType(data["type"])].test()
-            card = GuiSetup.DEVICES[mdType(data["type"])].get_card(self)
+            card = GuiSetup.DEVICES[mdType(data["type"])].get_card(self, data)
             self.measurement_grid.addWidget(card, self.card_count // 4, self.card_count % 4)
             self.cards.append(card)
             self.card_count += 1
@@ -129,17 +133,22 @@ class GuiSetup(qtw.QWidget):
         title_config.setContentsMargins(0, 10, 0, 0)
         config_form.addRow(title_config)
 
+        n_of_slots = pucks[self.puck_select.currentData()].get("n_of_slots", 1)
         self.slots = []
-        self.slot_selections = []
-        self.options = []
+        self.slot_selections = [-1] * n_of_slots
 
-        for i in range(pucks[puck_select.currentData()].get("n_of_slots", 1)):
+        for i in range(n_of_slots):
             row = qtw.QWidget()
             row.setLayout(qtw.QHBoxLayout())
             row.layout().setContentsMargins(0, 0, 0, 0)
             config_form.addRow(f" Slot {i + 1} ", row)
             device = qtw.QComboBox()
-            # device.currentIndexChanged.connect(self.save_setup_settings)
+
+            def on_change(slot):
+                self.slot_selections[slot] = self.slots[slot]["device"].currentData()
+                self.save_setup_settings()
+
+            device.activated.connect(lambda x, y=i: on_change(y))
             device.setFixedWidth(150)
             row.layout().addWidget(device)
             extra = qtw.QWidget()
@@ -149,13 +158,11 @@ class GuiSetup(qtw.QWidget):
         print("updating slots")
         self.update_slots()
 
-        # print("slotting")
-        # for i, slot in enumerate(setup_json.get("slots", [])):
-        #     print(i, slot)
-        #     self.slots[i].setCurrentIndex(slot.get("index", -1))
-        #     # self.slot_selections.append(self.slots[i].currentData())
-
-        # config_holder.setFixedWidth(350)
+        print("slotting")
+        for i, index in enumerate(setup_json.get("slots", [])):
+            print(i, index)
+            self.slots[i]["device"].setCurrentIndex(index)
+            self.slot_selections[i] = self.slots[i]["device"].currentData()
 
         self.layout().addStretch()
 
@@ -165,20 +172,35 @@ class GuiSetup(qtw.QWidget):
             n_of_slots = pucks[index].get("n_of_slots", 1)
             for i in range(len(self.slots) - n_of_slots):
                 slot = self.slots.pop()
-                label = config_form.labelForField(slot)
+                self.slot_selections.pop()
+                label = config_form.labelForField(slot["row"])
                 label.hide()
                 label.deleteLater()
-                slot.hide()
-                slot.deleteLater()
+                slot["row"].hide()
+                slot["row"].deleteLater()
 
             for i in range(n_of_slots - len(self.slots)):
-                slot = qtw.QComboBox()
-                slot.currentIndexChanged.connect(self.save_setup_settings)
-                config_form.addRow(f" Slot {i + n_of_slots} ", slot)
-                self.slots.append(slot)
-            self.update_slots()
+                row = qtw.QWidget()
+                row.setLayout(qtw.QHBoxLayout())
+                row.layout().setContentsMargins(0, 0, 0, 0)
+                config_form.addRow(f" Slot {i + 1} ", row)
+                device = qtw.QComboBox()
 
-        puck_select.currentIndexChanged.connect(change_puck)
+                def on_change(slot):
+                    self.slot_selections[slot] = self.slots[slot]["device"].currentData()
+                    self.save_setup_settings()
+
+                device.activated.connect(lambda x, y=i: on_change(y))
+                device.setFixedWidth(150)
+                row.layout().addWidget(device)
+                extra = qtw.QWidget()
+                row.layout().addWidget(extra)
+                self.slots.append({"row": row, "device": device, "extra": extra})
+                self.slot_selections.append(-1)
+            self.update_slots()
+            self.save_setup_settings()
+
+        self.puck_select.currentIndexChanged.connect(change_puck)
 
     def open_add_device(self):
         dlg = qtw.QDialog(self)
@@ -214,7 +236,7 @@ class GuiSetup(qtw.QWidget):
         dlg = qtw.QMessageBox(self)
         dlg.setFont(qtg.QFont("Bahnschrift", 16))
         dlg.setWindowTitle("delete")
-        dlg.setText(f"Delete {device.type.name}?")
+        dlg.setText(f"Delete {device.name}?")
         dlg.setStandardButtons(qtw.QMessageBox.Yes | qtw.QMessageBox.No)
         dlg.setIcon(qtw.QMessageBox.Question)
         button = dlg.exec()
@@ -234,22 +256,17 @@ class GuiSetup(qtw.QWidget):
     def save_setup_settings(self):
         print("saving")
         data = {
+            "puck": self.puck_select.currentText(),
             "devices": [card.get_data() for card in self.cards[:-1]],
-            "slots": [{"index": slot.currentIndex(), "data": slot.currentData()} for slot in self.slots]
+            "slots": [slot["device"].currentIndex() for slot in self.slots]
         }
-        self.slot_selections = [slot.currentData() for slot in self.slots]
-        print(self.slot_selections)
-        print(data)
         FileHandler.save_setup_json(data)
-
-    def open_edit_device(self, device):
-        pass
 
     def update_slots(self):
         options = self.cards[:-1]
         for i, slot in enumerate(self.slots):
             try:
-                index = self.options.index(self.slot_selections[i])
+                index = options.index(self.slot_selections[i])
             except (ValueError, IndexError):
                 index = -1
 
