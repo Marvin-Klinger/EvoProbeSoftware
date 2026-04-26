@@ -5,23 +5,25 @@ from PyQt5.QtCore import Qt
 from lakeshore import Model372
 from itertools import chain
 
-import DefaultSettings
+import DefaultSettings as ds
 from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
 from MeasurementDevice import MeasurementDevice
+from LakeshoreDevice import LakeshoreDevice
 
 
 class GuiSetup(qtw.QWidget):
 
     DEVICES = {
-        mdType.DUMMY: MeasurementDevice
+        mdType.DUMMY: MeasurementDevice,
+        mdType.LAKESHORE: LakeshoreDevice
     }
 
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
 
-        self.setFont(qtg.QFont("Bahnschrift", 16))
+        self.setFont(ds.FONT)
         self.setLayout(qtw.QVBoxLayout())
         self.setContentsMargins(0, 0, 0, 0)
         setup_json = FileHandler.get_setup_json()
@@ -47,7 +49,7 @@ class GuiSetup(qtw.QWidget):
         title_serial.setFont(qtg.QFont("Bahnschrift", 20))
         serial_form.addRow(title_serial)
 
-        pucks = [DefaultSettings.PUCK_SETTINGS] + FileHandler.get_pucks()
+        pucks = [ds.PUCK_SETTINGS] + FileHandler.get_pucks()
         self.puck_select = qtw.QComboBox()
         for i, puck in enumerate(pucks):
             self.puck_select.addItem(puck["id"], i)
@@ -145,7 +147,16 @@ class GuiSetup(qtw.QWidget):
             device = qtw.QComboBox()
 
             def on_change(slot):
-                self.slot_selections[slot] = self.slots[slot]["device"].currentData()
+                row, device, extra = self.slots[slot]["row"], self.slots[slot]["device"], self.slots[slot]["extra"]
+                self.slot_selections[slot] = device.currentData()
+                extra.hide()
+                extra.deleteLater()
+                try:
+                    extra = device.currentData().get_extra()
+                except AttributeError:
+                    extra = qtw.QWidget()
+                row.layout().addWidget(extra)
+                self.slots[slot]["extra"] = extra
                 self.save_setup_settings()
 
             device.activated.connect(lambda x, y=i: on_change(y))
@@ -163,6 +174,7 @@ class GuiSetup(qtw.QWidget):
             print(i, index)
             self.slots[i]["device"].setCurrentIndex(index)
             self.slot_selections[i] = self.slots[i]["device"].currentData()
+        self.update_slots()
 
         self.layout().addStretch()
 
@@ -179,7 +191,7 @@ class GuiSetup(qtw.QWidget):
                 slot["row"].hide()
                 slot["row"].deleteLater()
 
-            for i in range(n_of_slots - len(self.slots)):
+            for i in range(len(self.slots), n_of_slots):
                 row = qtw.QWidget()
                 row.setLayout(qtw.QHBoxLayout())
                 row.layout().setContentsMargins(0, 0, 0, 0)
@@ -187,7 +199,16 @@ class GuiSetup(qtw.QWidget):
                 device = qtw.QComboBox()
 
                 def on_change(slot):
-                    self.slot_selections[slot] = self.slots[slot]["device"].currentData()
+                    row, device, extra = self.slots[slot]["row"], self.slots[slot]["device"], self.slots[slot]["extra"]
+                    self.slot_selections[slot] = device.currentData()
+                    extra.hide()
+                    extra.deleteLater()
+                    try:
+                        extra = device.currentData().get_extra()
+                    except AttributeError:
+                        extra = qtw.QWidget()
+                    row.layout().addWidget(extra)
+                    self.slots[slot]["extra"] = extra
                     self.save_setup_settings()
 
                 device.activated.connect(lambda x, y=i: on_change(y))

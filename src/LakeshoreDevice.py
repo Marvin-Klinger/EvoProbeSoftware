@@ -3,6 +3,12 @@ import time
 import numpy as np
 from lakeshore import Model372
 from Model372Mock import Model372Mock, Model372InputSetupSettings
+from MeasurementDevice import DeviceCard
+from ExtraClasses import MeasurementDeviceType as mdType
+from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
+from PyQt5.QtCore import Qt
+import DefaultSettings as ds
 
 from collections import deque
 from threading import Thread, Lock
@@ -120,6 +126,86 @@ class LakeshoreDevice:
         self.connected = True
         print("connection successful")
         self.lock.release()
+
+    @staticmethod
+    def get_card(gui_setup, data=None):
+        print("getting card")
+        return LakeshoreCard(gui_setup, data if data is not None else {})
+
+
+class LakeshoreCard(DeviceCard):
+    NAME = "Lakeshore"
+    TYPE = mdType.LAKESHORE
+
+    def __init__(self, gui_setup, data):
+        super().__init__(gui_setup, data)
+
+        self.channel = Model372.InputChannel(data.get("channel", "A"))
+        self.ip = data.get("ip", "192.168.0.12")
+
+    def get_data(self):
+        return {"type": self.type, "name": self.name, "channel": self.channel.value}
+
+    def get_extra(self):
+        extra_holder = qtw.QWidget()
+        extra_holder.setLayout(qtw.QHBoxLayout())
+        extra_holder.layout().setContentsMargins(5, 0, 0, 0)
+        extra = qtw.QComboBox()
+        extra.setFixedWidth(150)
+        extra.addItem("Channel A", Model372.InputChannel.CONTROL)
+        for i in range(1, 5):
+            extra.addItem(f"Channel {i}", Model372.InputChannel(i))
+        extra.setCurrentIndex(0 if self.channel == Model372.InputChannel.CONTROL else self.channel.value)
+
+        def on_change():
+            self.channel = extra.currentData()
+            self.gui_setup.save_setup_settings()
+
+        extra.activated.connect(on_change)
+        extra_holder.layout().addWidget(extra)
+        extra_holder.layout().addStretch()
+
+        return extra_holder
+
+    def open_edit_window(self):
+        dlg = qtw.QDialog(self)
+        dlg.setWindowTitle("edit")
+        dlg.setFont(ds.FONT)
+        layout = qtw.QVBoxLayout()
+        dlg.setLayout(layout)
+
+        # Settings
+        form_holder = qtw.QWidget()
+        form_holder.setFont(ds.FONT)
+        form_layout = qtw.QFormLayout()
+        form_holder.setLayout(form_layout)
+        layout.addWidget(form_holder)
+
+        name = qtw.QLineEdit()
+        name.setText(self.name)
+        form_layout.addRow("Name ", name)
+
+        ip_address = qtw.QLineEdit()
+        ip_address.setInputMask("000.000.0.00;_")
+        ip_address.setText(self.ip)
+        form_layout.addRow("ip: ", ip_address)
+
+        btn_holder = qtw.QWidget()
+        btn_holder.setLayout(qtw.QHBoxLayout())
+        btn_holder.setContentsMargins(0, 10, 0, 0)
+        layout.addWidget(btn_holder)
+        btn_holder.layout().addStretch()
+        apply_btn = qtw.QPushButton("Apply")
+        btn_holder.layout().addWidget(apply_btn)
+
+        def apply_changes():
+            self.name = name.text()
+            self.gui_elements["name"].setText(self.name)
+            dlg.close()
+
+        apply_btn.clicked.connect(apply_changes)
+
+        dlg.exec()
 
 
 if __name__ == "__main__":

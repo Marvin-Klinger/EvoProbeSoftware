@@ -51,6 +51,9 @@ class MeasurementDevice:
 
 # Used to display added MeasurementDevice info and options
 class DeviceCard(qtw.QFrame):
+    NAME = "Dummy"
+    TYPE = mdType.DUMMY
+
     running_index = 0
 
     def __init__(self, gui_setup, data):
@@ -61,8 +64,8 @@ class DeviceCard(qtw.QFrame):
         DeviceCard.running_index += 1
         self.gui_elements = {}
 
-        self.type = mdType.DUMMY
-        self.name = data.get("name", "Dummy " + str(self.id))
+        self.type = self.TYPE
+        self.name = data.get("name", self.NAME)
 
         self.setMinimumWidth(200)
         self.setLayout(qtw.QVBoxLayout())
@@ -116,6 +119,7 @@ class DeviceCard(qtw.QFrame):
 
         # Settings
         form_holder = qtw.QWidget()
+        form_holder.setFont(ds.FONT)
         form_layout = qtw.QFormLayout()
         form_holder.setLayout(form_layout)
         layout.addWidget(form_holder)
@@ -134,6 +138,7 @@ class DeviceCard(qtw.QFrame):
         def apply_changes():
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
+            dlg.close()
 
         apply_btn.clicked.connect(apply_changes)
 
