@@ -22,6 +22,7 @@ class GuiSetup(qtw.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
+        self.pause_saving = False
 
         self.setFont(ds.FONT)
         self.setLayout(qtw.QVBoxLayout())
@@ -140,40 +141,18 @@ class GuiSetup(qtw.QWidget):
         self.slot_selections = [-1] * n_of_slots
 
         for i in range(n_of_slots):
-            row = qtw.QWidget()
-            row.setLayout(qtw.QHBoxLayout())
-            row.layout().setContentsMargins(0, 0, 0, 0)
-            config_form.addRow(f" Slot {i + 1} ", row)
-            device = qtw.QComboBox()
-
-            def on_change(slot):
-                row, device, extra = self.slots[slot]["row"], self.slots[slot]["device"], self.slots[slot]["extra"]
-                self.slot_selections[slot] = device.currentData()
-                extra.hide()
-                extra.deleteLater()
-                try:
-                    extra = device.currentData().get_extra()
-                except AttributeError:
-                    extra = qtw.QWidget()
-                row.layout().addWidget(extra)
-                self.slots[slot]["extra"] = extra
-                self.save_setup_settings()
-
-            device.activated.connect(lambda x, y=i: on_change(y))
-            device.setFixedWidth(150)
-            row.layout().addWidget(device)
-            extra = qtw.QWidget()
-            row.layout().addWidget(extra)
-            self.slots.append({"row": row, "device": device, "extra": extra})
+            config_form.addRow(f" Slot {i + 1} ", self.create_slot())
 
         print("updating slots")
         self.update_slots()
 
         print("slotting")
+        self.pause_saving = True
         for i, index in enumerate(setup_json.get("slots", [])):
             print(i, index)
             self.slots[i]["device"].setCurrentIndex(index)
             self.slot_selections[i] = self.slots[i]["device"].currentData()
+        self.pause_saving = True
         self.update_slots()
 
         self.layout().addStretch()
@@ -192,36 +171,42 @@ class GuiSetup(qtw.QWidget):
                 slot["row"].deleteLater()
 
             for i in range(len(self.slots), n_of_slots):
-                row = qtw.QWidget()
-                row.setLayout(qtw.QHBoxLayout())
-                row.layout().setContentsMargins(0, 0, 0, 0)
-                config_form.addRow(f" Slot {i + 1} ", row)
-                device = qtw.QComboBox()
+                config_form.addRow(f" Slot {i + 1} ", self.create_slot())
 
-                def on_change(slot):
-                    row, device, extra = self.slots[slot]["row"], self.slots[slot]["device"], self.slots[slot]["extra"]
-                    self.slot_selections[slot] = device.currentData()
-                    extra.hide()
-                    extra.deleteLater()
-                    try:
-                        extra = device.currentData().get_extra()
-                    except AttributeError:
-                        extra = qtw.QWidget()
-                    row.layout().addWidget(extra)
-                    self.slots[slot]["extra"] = extra
-                    self.save_setup_settings()
-
-                device.activated.connect(lambda x, y=i: on_change(y))
-                device.setFixedWidth(150)
-                row.layout().addWidget(device)
-                extra = qtw.QWidget()
-                row.layout().addWidget(extra)
-                self.slots.append({"row": row, "device": device, "extra": extra})
-                self.slot_selections.append(-1)
             self.update_slots()
             self.save_setup_settings()
 
         self.puck_select.currentIndexChanged.connect(change_puck)
+
+    def create_slot(self):
+        row = qtw.QWidget()
+        grid_layout = qtw.QGridLayout()
+        row.setLayout(grid_layout)
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+        device = qtw.QComboBox()
+
+        def on_change(slot):
+            row, device, extra = self.slots[slot]["row"], self.slots[slot]["device"], self.slots[slot]["extra"]
+            self.slot_selections[slot] = device.currentData()
+            extra.hide()
+            extra.deleteLater()
+            try:
+                extra = device.currentData().get_extra()
+            except AttributeError:
+                extra = qtw.QWidget()
+            grid_layout.addWidget(extra, 0, 1)
+            self.slots[slot]["extra"] = extra
+            self.save_setup_settings()
+
+        device.currentIndexChanged.connect(lambda x, y=len(self.slots): on_change(y))
+        grid_layout.addWidget(device, 0, 0)
+        extra = qtw.QWidget()
+        grid_layout.addWidget(extra, 0, 1)
+        grid_layout.setColumnStretch(2, 1)
+        self.slots.append({"row": row, "device": device, "extra": extra})
+        self.slot_selections.append(-1)
+
+        return row
 
     def open_add_device(self):
         dlg = qtw.QDialog(self)
@@ -275,6 +260,9 @@ class GuiSetup(qtw.QWidget):
         self.save_setup_settings()
 
     def save_setup_settings(self):
+        if self.pause_saving:
+            return
+
         print("saving")
         data = {
             "puck": self.puck_select.currentText(),
@@ -284,6 +272,7 @@ class GuiSetup(qtw.QWidget):
         FileHandler.save_setup_json(data)
 
     def update_slots(self):
+        self.pause_saving = True
         options = self.cards[:-1]
         for i, slot in enumerate(self.slots):
             try:
@@ -296,16 +285,7 @@ class GuiSetup(qtw.QWidget):
             for option in options:
                 device.addItem(option.name, option)
             device.setCurrentIndex(index)
-            device.setCurrentIndex(index)
-
-            extra.hide()
-            extra.deleteLater()
-            try:
-                extra = device.currentData().get_extra()
-            except AttributeError:
-                extra = qtw.QWidget()
-            row.layout().addWidget(extra)
-            slot["extra"] = extra
+        self.pause_saving = False
 
 
 

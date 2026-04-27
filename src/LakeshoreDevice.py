@@ -147,11 +147,7 @@ class LakeshoreCard(DeviceCard):
         return {"type": self.type, "name": self.name, "channel": self.channel.value}
 
     def get_extra(self):
-        extra_holder = qtw.QWidget()
-        extra_holder.setLayout(qtw.QHBoxLayout())
-        extra_holder.layout().setContentsMargins(5, 0, 0, 0)
         extra = qtw.QComboBox()
-        extra.setFixedWidth(150)
         extra.addItem("Channel A", Model372.InputChannel.CONTROL)
         for i in range(1, 5):
             extra.addItem(f"Channel {i}", Model372.InputChannel(i))
@@ -162,10 +158,7 @@ class LakeshoreCard(DeviceCard):
             self.gui_setup.save_setup_settings()
 
         extra.activated.connect(on_change)
-        extra_holder.layout().addWidget(extra)
-        extra_holder.layout().addStretch()
-
-        return extra_holder
+        return extra
 
     def open_edit_window(self):
         dlg = qtw.QDialog(self)
@@ -201,6 +194,8 @@ class LakeshoreCard(DeviceCard):
         def apply_changes():
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
+            self.gui_setup.update_slots()
+            self.gui_setup.save_setup_settings()
             dlg.close()
 
         apply_btn.clicked.connect(apply_changes)

@@ -9,6 +9,8 @@ from ExtraClasses import MeasurementDeviceType as mdType
 
 class MeasurementDevice:
 
+    # LOGGING_KEYS =
+
     def __init__(self):
         self.last_values = {}
         self.info = None
@@ -138,6 +140,8 @@ class DeviceCard(qtw.QFrame):
         def apply_changes():
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
+            self.gui_setup.update_slots()
+            self.gui_setup.save_setup_settings()
             dlg.close()
 
         apply_btn.clicked.connect(apply_changes)
