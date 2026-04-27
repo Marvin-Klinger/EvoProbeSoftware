@@ -69,7 +69,6 @@ class DeviceCard(qtw.QFrame):
         self.type = self.TYPE
         self.name = data.get("name", self.NAME)
 
-        self.setMinimumWidth(200)
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setSpacing(0)
         self.layout().setContentsMargins(0, 0, 0, 0)
