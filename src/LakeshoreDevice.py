@@ -143,18 +143,19 @@ class LakeshoreCard(DeviceCard):
         self.channel = Model372.InputChannel(data.get("channel", "A"))
         self.ip = data.get("ip", "192.168.0.12")
 
-    def get_data(self):
-        return {"type": self.type, "name": self.name, "channel": self.channel.value}
+    def get_data(self, extra=None):
+        return {"type": self.type, "name": self.name, "channel": extra.currentData().value if extra else "A"}
 
-    def get_extra(self):
+    def get_extra(self, slot, selection=None):
+        index = selection if selection is not None else 0
         extra = qtw.QComboBox()
         extra.addItem("Channel A", Model372.InputChannel.CONTROL)
         for i in range(1, 5):
             extra.addItem(f"Channel {i}", Model372.InputChannel(i))
-        extra.setCurrentIndex(0 if self.channel == Model372.InputChannel.CONTROL else self.channel.value)
+        extra.setCurrentIndex(index)
 
         def on_change():
-            self.channel = extra.currentData()
+            self.gui_setup.slot_selections[slot]["extra"] = extra.currentIndex()
             self.gui_setup.save_setup_settings()
 
         extra.activated.connect(on_change)

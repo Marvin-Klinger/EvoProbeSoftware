@@ -100,15 +100,15 @@ class DeviceCard(qtw.QFrame):
 
         name_label = qtw.QLabel(self.name)
         name_label.setAlignment(Qt.AlignCenter)
-        name_label.setFont(qtg.QFont("Bahnschrift", 30))
+        name_label.setFont(qtg.QFont("Bahnschrift", 26))
         name_label.setContentsMargins(20, 0, 20, 10)
         self.layout().addWidget(name_label)
         self.gui_elements["name"] = name_label
 
-    def get_data(self):
+    def get_data(self, extra=None):
         return {"type": self.type, "name": self.name}
 
-    def get_extra(self):
+    def get_extra(self, slot, selection=None):
         return qtw.QWidget()
 
     def open_edit_window(self):
