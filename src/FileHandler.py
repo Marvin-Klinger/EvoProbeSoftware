@@ -38,6 +38,7 @@ def get_setup_json():
         return {"devices": []}
 
 
+# TODO: overwrite only values in data
 def save_setup_json(data):
     save_json(SETUP_PATH, data)
 

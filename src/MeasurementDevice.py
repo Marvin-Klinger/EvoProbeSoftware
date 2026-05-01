@@ -106,7 +106,7 @@ class DeviceCard(qtw.QFrame):
         self.gui_elements["name"] = name_label
 
     def get_data(self, extra=None):
-        return {"type": self.type, "name": self.name}
+        return {"id": self.id, "type": self.type, "name": self.name}
 
     def get_extra(self, slot, selection=None):
         return qtw.QWidget()

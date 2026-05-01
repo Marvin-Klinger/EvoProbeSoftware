@@ -148,10 +148,10 @@ class GuiSetup(qtw.QWidget):
 
         print("slotting")
         self.pause_saving = True
-        for i, index in enumerate(setup_json.get("slots", [])):
-            print(i, index)
-            self.slots[i]["device"].setCurrentIndex(index)
-            self.slot_selections[i]["device"] = self.slots[i]["device"].currentData()
+        for i, slot in enumerate(setup_json.get("slot_selections", [])):
+            print(i, slot)
+            self.slots[i]["device"].setCurrentIndex(slot["device"])
+            self.slot_selections[i]["extra"] = slot["extra"]
         self.pause_saving = True
         self.update_slots()
 
@@ -184,7 +184,6 @@ class GuiSetup(qtw.QWidget):
         row.setLayout(grid_layout)
         grid_layout.setContentsMargins(0, 0, 0, 0)
         device = qtw.QComboBox()
-        print(device.sizeAdjustPolicy())
         device.setSizeAdjustPolicy(qtw.QComboBox.SizeAdjustPolicy.AdjustToContents)
 
         def on_change(slot):
@@ -271,12 +270,14 @@ class GuiSetup(qtw.QWidget):
         data = {
             "puck": self.puck_select.currentText(),
             "devices": [card.get_data() for card in self.cards[:-1]],
-            "slots": [slot["device"].currentIndex() for slot in self.slots]
+            "slots": [slot["device"].currentData().get_data(slot["extra"]) if slot["device"].currentData() is not None
+                      else None for slot in self.slots],
+            "slot_selections": [{"device": self.slots[i]["device"].currentIndex(),
+                                 "extra": self.slot_selections[i]["extra"]} for i in range(len(self.slots))]
         }
         FileHandler.save_setup_json(data)
 
     def update_slots(self):
-        print(self.slot_selections)
         self.pause_saving = True
         options = self.cards[:-1]
         for i, slot in enumerate(self.slots):

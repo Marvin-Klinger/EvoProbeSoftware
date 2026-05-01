@@ -144,7 +144,10 @@ class LakeshoreCard(DeviceCard):
         self.ip = data.get("ip", "192.168.0.12")
 
     def get_data(self, extra=None):
-        return {"type": self.type, "name": self.name, "channel": extra.currentData().value if extra else "A"}
+        data = {"id": self.id, "type": self.type, "name": self.name}
+        if extra is not None:
+            data["channel"] = extra.currentData().value
+        return data
 
     def get_extra(self, slot, selection=None):
         index = selection if selection is not None else 0
