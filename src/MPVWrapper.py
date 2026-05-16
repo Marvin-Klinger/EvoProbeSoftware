@@ -5,14 +5,21 @@ import numpy as np
 
 import threading
 
+from lakeshore import Model372
+
 from src.ExtraClasses import DeviceInfo
-from src.MeasurementDevice import MeasurementDevice
+from src.MeasurementDevice import MeasurementDevice, DeviceCard
+from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
+from PyQt5.QtCore import Qt
+from ExtraClasses import MeasurementDeviceType as mdType
+import DefaultSettings as ds
 
 
 class MPVWrapper(MeasurementDevice):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, data):
+        super().__init__(data)
 
         self.server = None
         self.client = None
@@ -109,3 +116,75 @@ class MPVWrapper(MeasurementDevice):
             print(traceback.format_exc())
         self.lock.release()
 
+    @staticmethod
+    def get_card(gui_setup, data=None):
+        return MPVCard(gui_setup, data if data is not None else {})
+
+
+class MPVCard(DeviceCard):
+    NAME = "MultiPyVu"
+    TYPE = mdType.MPV
+
+    def __init__(self, gui_setup, data):
+        super().__init__(gui_setup, data)
+
+    def get_data(self, extra=None):
+        data = {"id": self.id, "type": self.type, "name": self.name}
+        return data
+
+    # def get_extra(self, slot, selection=None):
+    #     index = selection if selection is not None else 0
+    #     extra = qtw.QComboBox()
+    #     extra.addItem("Channel A", Model372.InputChannel.CONTROL)
+    #     for i in range(1, 5):
+    #         extra.addItem(f"Channel {i}", Model372.InputChannel(i))
+    #     extra.setCurrentIndex(index)
+    #
+    #     def on_change():
+    #         self.gui_setup.slot_selections[slot]["extra"] = extra.currentIndex()
+    #         self.gui_setup.save_setup_settings()
+    #
+    #     extra.activated.connect(on_change)
+    #     return extra
+    #
+    # def open_edit_window(self):
+    #     dlg = qtw.QDialog(self)
+    #     dlg.setWindowTitle("edit")
+    #     dlg.setFont(ds.FONT)
+    #     layout = qtw.QVBoxLayout()
+    #     dlg.setLayout(layout)
+    #
+    #     # Settings
+    #     form_holder = qtw.QWidget()
+    #     form_holder.setFont(ds.FONT)
+    #     form_layout = qtw.QFormLayout()
+    #     form_holder.setLayout(form_layout)
+    #     layout.addWidget(form_holder)
+    #
+    #     name = qtw.QLineEdit()
+    #     name.setText(self.name)
+    #     form_layout.addRow("Name ", name)
+    #
+    #     ip_address = qtw.QLineEdit()
+    #     ip_address.setInputMask("000.000.0.00;_")
+    #     ip_address.setText(self.ip)
+    #     form_layout.addRow("ip: ", ip_address)
+    #
+    #     btn_holder = qtw.QWidget()
+    #     btn_holder.setLayout(qtw.QHBoxLayout())
+    #     btn_holder.setContentsMargins(0, 10, 0, 0)
+    #     layout.addWidget(btn_holder)
+    #     btn_holder.layout().addStretch()
+    #     apply_btn = qtw.QPushButton("Apply")
+    #     btn_holder.layout().addWidget(apply_btn)
+    #
+    #     def apply_changes():
+    #         self.name = name.text()
+    #         self.gui_elements["name"].setText(self.name)
+    #         self.gui_setup.update_slots()
+    #         self.gui_setup.save_setup_settings()
+    #         dlg.close()
+    #
+    #     apply_btn.clicked.connect(apply_changes)
+    #
+    #     dlg.exec()

@@ -11,7 +11,7 @@ class MeasurementDevice:
 
     # LOGGING_KEYS =
 
-    def __init__(self):
+    def __init__(self, data):
         self.last_values = {}
         self.info = None
         self.calibration = None
@@ -44,6 +44,14 @@ class MeasurementDevice:
     def connect_async(self):
         t = Thread(target=self.connect, daemon=True)
         t.start()
+
+    # starts routines necessary for measuring data
+    def start_reading(self):
+        pass
+
+    # stops routines necessary for measuring data
+    def stop_reading(self):
+        pass
 
     @staticmethod
     def get_card(gui_setup, data=None):

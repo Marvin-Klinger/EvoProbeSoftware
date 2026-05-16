@@ -16,14 +16,15 @@ from itertools import chain
 
 
 class LakeshoreDevice:
-
     IP_ADDRESS = "192.168.0.12"
     DEBUG_MODE = True
 
-    def __init__(self, input_channels: list[Model372.InputChannel], scanner_interval = 5):
+    Devices = {}
+
+    def __init__(self, scanner_interval=5):
 
         self.lakeshore: Model372 = None
-        self.input_channels = input_channels
+        self.input_channels = []
         self.scanner_queue = deque()
         self.scanner_interval = scanner_interval
         self.current_channel = None
@@ -34,28 +35,25 @@ class LakeshoreDevice:
 
         self.info = None
 
-        self.initialize_async()
-
-    def initialize(self):
-        self.connect()
-        self.scanner_queue.extend([c for c in self.input_channels if c != Model372.InputChannel.CONTROL])
-        self.lock.acquire(blocking=True)
-        if len(self.scanner_queue) and self.connected:
-            self.set_next_scanner_position()
-        self.lock.release()
-
-    # initializes the lakeshore asynchronously to not freeze the GUI
-    def initialize_async(self):
-        t = Thread(target=self.initialize, daemon=True)
-        t.start()
+    def add_channel(self, channel: Model372.InputChannel):
+        self.input_channels.append(channel)
+        if channel != Model372.InputChannel.CONTROL:
+            self.scanner_queue.append(channel)
 
     # starts changing scanner position every scanner_interval
     def start_scanner_cycle(self):
-        if len(self.scanner_queue) < 2:
+        self.lock.acquire()
+        if self.is_cycling:
+            self.lock.release()
+            return
+
+        if len(self.scanner_queue) < 1:
             print("scanner cycling not necessary")
+            self.lock.release()
             return
 
         self.is_cycling = True
+        self.lock.release()
 
         def cycle():
             while self.is_cycling:
@@ -75,8 +73,12 @@ class LakeshoreDevice:
 
     # sets scanner to next channel in scanner_queue
     def set_next_scanner_position(self):
-        if len(self.scanner_queue):
+        if len(self.scanner_queue) and self.connected:
             channel = self.scanner_queue.popleft()
+            if self.current_channel == channel:
+                self.scanner_queue.append(channel)
+                return
+
             self.lakeshore.set_scanner_status(channel.value, False)
             self.current_channel = channel
             self.scanner_queue.append(channel)
@@ -100,6 +102,7 @@ class LakeshoreDevice:
         print("connecting to lakeshore ...")
         self.lock.acquire(blocking=True)
         if self.lakeshore is not None:
+            print("already connected")
             self.lock.release()
             return
 
@@ -131,6 +134,13 @@ class LakeshoreDevice:
     def get_card(gui_setup, data=None):
         print("getting card")
         return LakeshoreCard(gui_setup, data if data is not None else {})
+
+    @staticmethod
+    def get_device(id: int):
+        if id not in LakeshoreDevice.Devices:
+            LakeshoreDevice.Devices[id] = LakeshoreDevice()
+
+        return LakeshoreDevice.Devices[id]
 
 
 class LakeshoreCard(DeviceCard):

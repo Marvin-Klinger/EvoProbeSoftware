@@ -26,27 +26,28 @@ class Controller:
     def instantiate_devices(self):
         devices = []
         slots = FileHandler.get_setup_json().get("slots", [])
-        lh_channels = []
         for slot in slots:
-            data = slot.get("data", None)
-            if not data:
+            if slot is None:
                 continue
-            match data.get("device", None):
-                case mdType.LAKESHORE.value:
-                    lh_channels.append(data["channel"])
-                case mdType.MPV.value:
-                    mpv = MPVWrapper()
+
+            print(slot)
+            match slot.get("type", None):
+                case mdType.LAKESHORE:
+                    lhc = LakeshoreChannel(slot)
+                    devices.append(lhc)
+                case mdType.MPV:
+                    mpv = MPVWrapper(slot)
                     devices.append(mpv)
                 case _:
                     pass
-        if len(lh_channels) > 0:
-            input_channels = [Model372.InputChannel(ch) for ch in lh_channels]
-            device = LakeshoreDevice(input_channels)
-            for ch in input_channels:
-                channel = LakeshoreChannel(device, ch, None)
-                devices.append(channel)
         self.devices = devices
-        print(self.devices)
+        print("Devices:", self.devices)
+
+        for device in self.devices:
+            device.connect_async()
+
+        for device in self.devices:
+            device.start_reading()
 
     # starts the data reading and logging process and selected sequence
     def start_sequence(self, save_path):

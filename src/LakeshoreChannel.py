@@ -12,19 +12,22 @@ class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
 
-    def __init__(self, lakeshore: LakeshoreDevice, input_channel: Model372.InputChannel, calibration):
-        super().__init__()
+    Lakeshore_Devices = []
 
-        self.lakeshore = lakeshore
-        self.input_channel = input_channel
-        self.calibration = calibration
-        # TODO: is quadrature needed? Yes
-        self.keys = ["kelvin", "resistance", "power"]
+    def __init__(self, data):
+        super().__init__(data)
+
+        self.input_channel = Model372.InputChannel(data["channel"])
+        self.lakeshore = LakeshoreDevice.get_device(data["id"])
+        self.lakeshore.add_channel(self.input_channel)
+        self.calibration = None
+        self.keys = (["kelvin", "resistance", "power"] +
+                     (["quadrature"] if self.input_channel != Model372.InputChannel.CONTROL else []))
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.info = DeviceInfo(name=f"Channel {self.input_channel.name}", version=0)
 
-        self.last_reading = {"kelvin": np.nan, "resistance": np.nan, "power": np.nan}
+        self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
     # TODO: add calibration
@@ -55,13 +58,13 @@ class LakeshoreChannel(MeasurementDevice):
         self.lakeshore.connect()
         self.connected = self.lakeshore.connected
 
+    def start_reading(self):
+        # self.lakeshore.set_next_scanner_position()
+        self.lakeshore.start_scanner_cycle()
+
+    def stop_reading(self):
+        self.lakeshore.stop_scanner_cycle()
+
 
 if __name__ == "__main__":
-    device = LakeshoreDevice([Model372.InputChannel.CONTROL, Model372.InputChannel.ONE, Model372.InputChannel.TEN])
-    channel = LakeshoreChannel(device, Model372.InputChannel.ONE, None)
-    print(device.current_channel)
-    print(device.is_ready)
-    time.sleep(2)
-    print(device.is_ready)
-    print(channel.get_readings())
-    print(channel.get_logging_readings())
+    pass

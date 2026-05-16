@@ -10,13 +10,15 @@ from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
 from MeasurementDevice import MeasurementDevice
 from LakeshoreDevice import LakeshoreDevice
+from src.MPVWrapper import MPVWrapper
 
 
 class GuiSetup(qtw.QWidget):
 
     DEVICES = {
         mdType.DUMMY: MeasurementDevice,
-        mdType.LAKESHORE: LakeshoreDevice
+        mdType.LAKESHORE: LakeshoreDevice,
+        mdType.MPV: MPVWrapper
     }
 
     def __init__(self, main_window):
