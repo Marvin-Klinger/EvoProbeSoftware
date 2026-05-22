@@ -285,15 +285,16 @@ class GuiSetup(qtw.QWidget):
         for i, slot in enumerate(self.slots):
             selected_device, selected_extra = self.slot_selections[i]["device"], self.slot_selections[i]["extra"]
             try:
-                index = options.index(selected_device)
+                index = options.index(selected_device) + 1
             except (ValueError, IndexError):
-                index = -1
+                index = 0
 
             row, device, extra = slot["row"], slot["device"], slot["extra"]
             device.clear()
+            device.addItem("-", None)
             for option in options:
                 device.addItem(option.name, option)
-            if index != -1:
+            if index != 0:
                 self.slot_selections[i]["device"], self.slot_selections[i]["extra"] = selected_device, selected_extra
             device.setCurrentIndex(index)
             device.adjustSize()
