@@ -3,6 +3,9 @@ from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
 from src.MeasurementDevice import MeasurementDevice
+import time
+from threading import Thread
+import DefaultSettings as ds
 
 
 class GuiSequence(qtw.QWidget):
@@ -52,7 +55,7 @@ class GuiSequence(qtw.QWidget):
         preview_holder.setLayout(preview_layout)
         self.layout().addWidget(preview_holder)
 
-        title_preview = qtw.QLabel("Control Device")
+        title_preview = qtw.QLabel("Preview")
         title_preview.setFont(qtg.QFont("Bahnschrift", 20))
         title_preview.setContentsMargins(0, 10, 0, 0)
         preview_layout.addRow(title_preview)
@@ -63,17 +66,62 @@ class GuiSequence(qtw.QWidget):
         preview_layout.addRow(devices_holder)
 
         for device in self.devices:
-            device_holder = qtw.QWidget()
-            device_layout = qtw.QFormLayout()
-            device_holder.setLayout(device_layout)
-            devices_layout.addWidget(device_holder)
-
-            device_name = qtw.QLabel(device.info.name)
-            device_layout.addRow(device_name)
-
-            readings = device.get_logging_readings()
-            print(readings)
-            for i, key in enumerate(device.logging_keys):
-                device_layout.addRow(f"{key}: ", qtw.QLabel(str(readings[i])))
+            print("previewing device: ", device)
+            card = PreviewCard(device, devices_layout)
 
         self.layout().addStretch()
+
+
+class PreviewCard:
+
+    def __init__(self, device: MeasurementDevice, parent_layout: qtw.QHBoxLayout):
+        self.device = device
+        self.parent_layout = parent_layout
+        self.is_active = True
+
+        device_holder = qtw.QWidget()
+        device_layout = qtw.QFormLayout()
+        device_holder.setLayout(device_layout)
+        parent_layout.addWidget(device_holder)
+
+        device_name = qtw.QLabel(device.info.name)
+        device_layout.addRow(device_name)
+        print("basic done")
+
+        self.reading_displays = {}
+        is_connected = self.device.connected
+        status = qtw.QLabel("● connected" if is_connected else "● offline")
+        status.setStyleSheet(f"color: {'green' if is_connected else 'red'}")
+        status.setFont(ds.FONT)
+        self.reading_displays["status"] = status
+        device_layout.addRow(status)
+
+        for key in device.logging_keys:
+            display = qtw.QLabel("-")
+            self.reading_displays[key] = display
+            device_layout.addRow(f"{key}: ", display)
+
+        t = Thread(daemon=True, target=self.update)
+        t.start()
+
+    def update(self):
+        while self.is_active:
+            try:
+                status = self.reading_displays["status"]
+                if self.device.connected:
+                    status.setText("● connected")
+                    status.setStyleSheet(f"color: green")
+                else:
+                    status.setText("● offline")
+                    status.setStyleSheet(f"color: red")
+
+                readings = self.device.get_logging_readings()
+                print(readings)
+                for i, key in enumerate(self.device.logging_keys):
+                    self.reading_displays[key].setText(f"{readings[i]:.1f}")
+            except RuntimeError:
+                self.is_active = False
+                return
+
+            time.sleep(5)
+

@@ -35,8 +35,6 @@ class MPVWrapper(MeasurementDevice):
         self.key_to_function = {"temperature": self.get_temperature,
                                 "field": self.get_field}
 
-        self.connect_async()
-
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
         readings = {}
