@@ -21,7 +21,7 @@ class LakeshoreDevice:
 
     Devices = {}
 
-    def __init__(self, scanner_interval=5):
+    def __init__(self, scanner_interval=2):
 
         self.lakeshore: Model372 = None
         self.input_channels = []
@@ -30,6 +30,7 @@ class LakeshoreDevice:
         self.current_channel = None
         self.is_ready = False
         self.is_cycling = False
+        self.cycle_is_alive = False
         self.connected = False
         self.lock = Lock()
 
@@ -53,19 +54,32 @@ class LakeshoreDevice:
             return
 
         self.is_cycling = True
+        if self.cycle_is_alive:
+            self.lock.release()
+            return
         self.lock.release()
 
         def cycle():
+            self.lock.acquire()
+            self.cycle_is_alive = True
             while self.is_cycling:
-                time.sleep(self.scanner_interval)
+                self.lock.release()
                 self.set_next_scanner_position()
+                time.sleep(self.scanner_interval)
+                self.lock.acquire()
+            self.cycle_is_alive = False
+            self.lock.release()
 
         t = Thread(target=cycle, daemon=True)
+        print("starting scanner cycle")
+        print(self.scanner_queue)
         t.start()
 
     # stops the scanner cycling
     def stop_scanner_cycle(self):
+        self.lock.acquire()
         self.is_cycling = False
+        self.lock.release()
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self, input_channel: Model372.InputChannel):

@@ -27,7 +27,13 @@ class GuiSequence(qtw.QWidget):
         self.layout().addWidget(topbar_holder)
 
         back_btn = qtw.QPushButton("↩")
-        back_btn.clicked.connect(self.main_window.load_sequence_select_window)
+
+        def _back():
+            for device in self.devices:
+                device.stop_reading()
+            self.main_window.load_sequence_select_window()
+
+        back_btn.clicked.connect(_back)
         topbar_layout.addWidget(back_btn)
 
         topbar_layout.addStretch()
@@ -86,7 +92,6 @@ class PreviewCard:
 
         device_name = qtw.QLabel(device.info.name)
         device_layout.addRow(device_name)
-        print("basic done")
 
         self.reading_displays = {}
         is_connected = self.device.connected
@@ -116,12 +121,10 @@ class PreviewCard:
                     status.setStyleSheet(f"color: red")
 
                 readings = self.device.get_logging_readings()
-                print(readings)
                 for i, key in enumerate(self.device.logging_keys):
                     self.reading_displays[key].setText(f"{readings[i]:.1f}")
             except RuntimeError:
                 self.is_active = False
                 return
 
-            time.sleep(5)
-
+            time.sleep(3)
