@@ -14,7 +14,6 @@ from src.MPVWrapper import MPVWrapper
 
 
 class GuiSetup(qtw.QWidget):
-
     DEVICES = {
         mdType.DUMMY: MeasurementDevice,
         mdType.LAKESHORE: LakeshoreDevice,
@@ -61,6 +60,7 @@ class GuiSetup(qtw.QWidget):
         except (ValueError, KeyError):
             index = 0
         self.puck_select.setCurrentIndex(index)
+        self.current_puck = pucks[self.puck_select.currentData()]
         serial_form.addRow(" Puck ", self.puck_select)
 
         rod_select = qtw.QComboBox()
@@ -121,7 +121,7 @@ class GuiSetup(qtw.QWidget):
         self.slot_selections = []
 
         for i in range(n_of_slots):
-            config_form.addRow(f" Slot {i + 1} ", self.create_slot())
+            config_form.addRow(f" Slot {i + 1} ", self.create_slot(i))
 
         print("updating slots")
         self.update_slots()
@@ -129,11 +129,11 @@ class GuiSetup(qtw.QWidget):
         print("slotting")
         self.pause_saving = True
         for i, slot in enumerate(setup_json.get("slot_selections", [])):
-            print(i, slot)
-            # TODO: use puck names if empty/new
-            self.slot_selections[i]["sample_name"] = slot.get("sample_name", "")
+            self.slot_selections[i]["sample_name"] = slot["sample_name"] if slot.get("sample_name", "") != "" \
+                else self.current_puck["slots"][i].get("name", f"Sample {i + 1}")
             self.slots[i]["device"].setCurrentIndex(slot["device"])
             self.slot_selections[i]["extra"] = slot["extra"]
+        print(self.slot_selections)
         self.pause_saving = True
         self.update_slots()
 
@@ -142,7 +142,8 @@ class GuiSetup(qtw.QWidget):
         # Method Section (methods that have dependencies from later sections)
         def change_puck(index):
             print(index)
-            n_of_slots = pucks[index].get("n_of_slots", 1)
+            self.current_puck = pucks[index]
+            n_of_slots = self.current_puck.get("n_of_slots", 1)
             for i in range(len(self.slots) - n_of_slots):
                 slot = self.slots.pop()
                 self.slot_selections.pop()
@@ -155,18 +156,25 @@ class GuiSetup(qtw.QWidget):
             for i in range(len(self.slots), n_of_slots):
                 config_form.addRow(f" Slot {i + 1} ", self.create_slot())
 
+            for i, slot in enumerate(self.current_puck["slots"]):
+                self.slot_selections[i]["sample_name"] = slot.get("name", f"Sample {i + 1}")
+                self.slots[i]["sample_name"].setReadOnly(slot.get("read_only", False))
+                self.slots[i]["sample_name"].setDisabled(slot.get("read_only", False))
+
             self.update_slots()
             self.save_setup_settings()
 
         self.puck_select.currentIndexChanged.connect(change_puck)
 
-    def create_slot(self):
+    def create_slot(self, x=0):
         row = qtw.QWidget()
         grid_layout = qtw.QGridLayout()
         row.setLayout(grid_layout)
         grid_layout.setContentsMargins(0, 0, 0, 0)
         sample_name = qtw.QLineEdit()
         sample_name.setFixedWidth(150)
+        sample_name.setReadOnly(self.current_puck["slots"][x].get("read_only", False))
+        sample_name.setDisabled(self.current_puck["slots"][x].get("read_only", False))
 
         def on_edit():
             print("changed text")
@@ -274,7 +282,7 @@ class GuiSetup(qtw.QWidget):
         self.pause_saving = True
         options = self.cards[:-1]
         for i, slot in enumerate(self.slots):
-            selected_name = self.slot_selections[i].get("name", "")
+            selected_name = self.slot_selections[i].get("sample_name", "")
             selected_device, selected_extra = self.slot_selections[i]["device"], self.slot_selections[i]["extra"]
             try:
                 index = options.index(selected_device) + 1
@@ -293,6 +301,3 @@ class GuiSetup(qtw.QWidget):
             device.setCurrentIndex(index)
             device.adjustSize()
         self.pause_saving = False
-
-
-

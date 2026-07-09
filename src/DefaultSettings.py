@@ -23,9 +23,9 @@ PUCK_SETTINGS = {
     "id": "default",
     "n_of_slots": 3,
     "slots": [
-        {},
-        {},
-        {}
+        {"name": "Sample 1", "read_only": False},
+        {"name": "Sample 2", "read_only": False},
+        {"name": "Thermometer", "read_only": True}
     ]
 }
 
