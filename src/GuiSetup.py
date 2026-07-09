@@ -70,28 +70,6 @@ class GuiSetup(qtw.QWidget):
 
         serial_holder.setFixedWidth(serial_holder.sizeHint().width() + 20)
 
-        # Control Device Section
-        # control_holder = qtw.QWidget()
-        # control_form = qtw.QFormLayout()
-        # control_holder.setLayout(control_form)
-        # self.layout().addWidget(control_holder)
-        #
-        # title_control = qtw.QLabel("Control Device")
-        # title_control.setFont(qtg.QFont("Bahnschrift", 20))
-        # title_control.setContentsMargins(0, 10, 0, 0)
-        # control_form.addRow(title_control)
-        #
-        # control_hbox = qtw.QWidget()
-        # control_hbox.setLayout(qtw.QHBoxLayout())
-        # control_hbox.layout().setContentsMargins(10, 0, 0, 0)
-        # control_form.addRow(control_hbox)
-        #
-        # ppms_btn = qtw.QPushButton("PPMS")
-        # control_hbox.layout().addWidget(ppms_btn)
-        # dynacool_btn = qtw.QPushButton("DynaCool")
-        # control_hbox.layout().addWidget(dynacool_btn)
-        # control_hbox.layout().addStretch()
-
         # Measurement Device Section
         measurement_holder = qtw.QWidget()
         measurement_form = qtw.QFormLayout()
@@ -152,6 +130,8 @@ class GuiSetup(qtw.QWidget):
         self.pause_saving = True
         for i, slot in enumerate(setup_json.get("slot_selections", [])):
             print(i, slot)
+            # TODO: use puck names if empty/new
+            self.slot_selections[i]["sample_name"] = slot.get("sample_name", "")
             self.slots[i]["device"].setCurrentIndex(slot["device"])
             self.slot_selections[i]["extra"] = slot["extra"]
         self.pause_saving = True
@@ -185,6 +165,16 @@ class GuiSetup(qtw.QWidget):
         grid_layout = qtw.QGridLayout()
         row.setLayout(grid_layout)
         grid_layout.setContentsMargins(0, 0, 0, 0)
+        sample_name = qtw.QLineEdit()
+        sample_name.setFixedWidth(150)
+
+        def on_edit():
+            print("changed text")
+            sample_name.setCursorPosition(0)
+            self.save_setup_settings()
+
+        sample_name.editingFinished.connect(lambda: on_edit())
+        grid_layout.addWidget(sample_name, 0, 0)
         device = qtw.QComboBox()
         device.setSizeAdjustPolicy(qtw.QComboBox.SizeAdjustPolicy.AdjustToContents)
 
@@ -199,17 +189,17 @@ class GuiSetup(qtw.QWidget):
                 extra = device.currentData().get_extra(slot, self.slot_selections[slot]["extra"])
             except AttributeError:
                 extra = qtw.QWidget()
-            grid_layout.addWidget(extra, 0, 1)
+            grid_layout.addWidget(extra, 0, 2)
             self.slots[slot]["extra"] = extra
             self.save_setup_settings()
 
         device.currentIndexChanged.connect(lambda x, y=len(self.slots): on_change(y))
-        grid_layout.addWidget(device, 0, 0)
+        grid_layout.addWidget(device, 0, 1)
         extra = qtw.QWidget()
-        grid_layout.addWidget(extra, 0, 1)
-        grid_layout.setColumnStretch(2, 1)
-        self.slots.append({"row": row, "device": device, "extra": extra})
-        self.slot_selections.append({"device": None, "extra": None})
+        grid_layout.addWidget(extra, 0, 2)
+        grid_layout.setColumnStretch(3, 1)
+        self.slots.append({"row": row, "sample_name": sample_name, "device": device, "extra": extra})
+        self.slot_selections.append({"sample_name": "", "device": None, "extra": None})
 
         return row
 
@@ -274,7 +264,8 @@ class GuiSetup(qtw.QWidget):
             "devices": [card.get_data() for card in self.cards[:-1]],
             "slots": [slot["device"].currentData().get_data(slot["extra"]) if slot["device"].currentData() is not None
                       else None for slot in self.slots],
-            "slot_selections": [{"device": self.slots[i]["device"].currentIndex(),
+            "slot_selections": [{"sample_name": self.slots[i]["sample_name"].text(),
+                                 "device": self.slots[i]["device"].currentIndex(),
                                  "extra": self.slot_selections[i]["extra"]} for i in range(len(self.slots))]
         }
         FileHandler.save_setup_json(data)
@@ -283,13 +274,16 @@ class GuiSetup(qtw.QWidget):
         self.pause_saving = True
         options = self.cards[:-1]
         for i, slot in enumerate(self.slots):
+            selected_name = self.slot_selections[i].get("name", "")
             selected_device, selected_extra = self.slot_selections[i]["device"], self.slot_selections[i]["extra"]
             try:
                 index = options.index(selected_device) + 1
             except (ValueError, IndexError):
                 index = 0
 
-            row, device, extra = slot["row"], slot["device"], slot["extra"]
+            row, sample_name, device, extra = slot["row"], slot["sample_name"], slot["device"], slot["extra"]
+            sample_name.setText(selected_name)
+            sample_name.setCursorPosition(0)
             device.clear()
             device.addItem("-", None)
             for option in options:
