@@ -21,7 +21,7 @@ class LakeshoreDevice:
 
     Devices = {}
 
-    def __init__(self, scanner_interval=2):
+    def __init__(self, scanner_interval=5):
 
         self.lakeshore: Model372 = None
         self.input_channels = []
@@ -164,10 +164,23 @@ class LakeshoreCard(DeviceCard):
     def __init__(self, gui_setup, data):
         super().__init__(gui_setup, data)
 
-        self.channel = Model372.InputChannel(data.get("channel", "A"))
+        # self.channel = Model372.InputChannel(data.get("channel", "A"))
+        self.use_usb = data.get("use_usb", True)
+        self.baud_rate = data.get("baud_rate", 57600)
+        self.use_ip = data.get("use_ip", False)
         self.ip = data.get("ip", "192.168.0.12")
 
-    def get_data(self, extra=None):
+        if self.use_usb == self.use_ip:
+            self.use_usb = True
+            self.use_ip = False
+
+    def get_device_data(self, extra=None):
+        data = {"id": self.id, "type": self.type, "name": self.name,
+                "use_usb": self.use_usb, "baud_rate": self.baud_rate,
+                "use_ip": self.use_ip, "ip": self.ip}
+        return data
+
+    def get_slot_data(self, extra=None):
         data = {"id": self.id, "type": self.type, "name": self.name}
         if extra is not None:
             data["channel"] = extra.currentData().value
@@ -206,10 +219,49 @@ class LakeshoreCard(DeviceCard):
         name.setText(self.name)
         form_layout.addRow("Name ", name)
 
+        connection_mode_holder = qtw.QWidget()
+        connection_mode_holder.setLayout(qtw.QHBoxLayout())
+        layout.addWidget(connection_mode_holder)
+
+        usb_holder = qtw.QWidget()
+        usb_holder.setLayout(qtw.QVBoxLayout())
+        connection_mode_holder.layout().addWidget(usb_holder)
+        use_usb = qtw.QCheckBox("use usb")
+        use_usb.setChecked(self.use_usb)
+        usb_holder.layout().addWidget(use_usb)
+        baud_rate = qtw.QLineEdit()
+        baud_rate.setValidator(qtg.QIntValidator())
+        baud_rate.setText(str(self.baud_rate))
+        baud_rate.setEnabled(self.use_usb)
+        usb_holder.layout().addWidget(baud_rate)
+
+        ip_holder = qtw.QWidget()
+        ip_holder.setLayout(qtw.QVBoxLayout())
+        connection_mode_holder.layout().addWidget(ip_holder)
+        use_ip = qtw.QCheckBox("use ip")
+        use_ip.setChecked(self.use_ip)
+        ip_holder.layout().addWidget(use_ip)
         ip_address = qtw.QLineEdit()
         ip_address.setInputMask("000.000.0.00;_")
         ip_address.setText(self.ip)
-        form_layout.addRow("ip: ", ip_address)
+        ip_address.setEnabled(self.use_ip)
+        ip_holder.layout().addWidget(ip_address)
+
+        def connection_mode_change(usb_toggled = False, ip_toggled = False):
+            if usb_toggled:
+                baud_rate.setEnabled(use_usb.isChecked())
+                ip_address.setDisabled(use_usb.isChecked())
+                use_ip.setChecked(not use_usb.isChecked())
+            elif ip_toggled:
+                baud_rate.setDisabled(use_ip.isChecked())
+                use_usb.setChecked(not use_ip.isChecked())
+                ip_address.setEnabled(use_ip.isChecked())
+
+        use_usb.stateChanged.connect(lambda: connection_mode_change(usb_toggled=True))
+        use_ip.stateChanged.connect(lambda: connection_mode_change(ip_toggled=True))
+
+        connection_mode_holder.layout().addStretch()
+        form_layout.addRow(connection_mode_holder)
 
         btn_holder = qtw.QWidget()
         btn_holder.setLayout(qtw.QHBoxLayout())
@@ -222,6 +274,10 @@ class LakeshoreCard(DeviceCard):
         def apply_changes():
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
+            self.use_usb = use_usb.isChecked()
+            self.baud_rate = baud_rate.text()
+            self.use_ip = use_ip.isChecked()
+            self.ip = ip_address.text()
             self.gui_setup.update_slots()
             self.gui_setup.save_setup_settings()
             dlg.close()

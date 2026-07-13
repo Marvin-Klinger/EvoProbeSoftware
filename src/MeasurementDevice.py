@@ -3,6 +3,7 @@ from threading import Thread
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
+
 import DefaultSettings as ds
 from ExtraClasses import MeasurementDeviceType as mdType
 
@@ -113,7 +114,14 @@ class DeviceCard(qtw.QFrame):
         self.layout().addWidget(name_label)
         self.gui_elements["name"] = name_label
 
+    # [deprecated] ("was split into get_device_data() and get_slot_data()")
     def get_data(self, extra=None):
+        return {"id": self.id, "type": self.type, "name": self.name, "warning": "deprecated"}
+
+    def get_device_data(self):
+        return {"id": self.id, "type": self.type, "name": self.name}
+
+    def get_slot_data(self, extra=None):
         return {"id": self.id, "type": self.type, "name": self.name}
 
     def get_extra(self, slot, selection=None):

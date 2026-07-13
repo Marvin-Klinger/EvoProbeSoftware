@@ -269,8 +269,8 @@ class GuiSetup(qtw.QWidget):
         print("saving")
         data = {
             "puck": self.puck_select.currentText(),
-            "devices": [card.get_data() for card in self.cards[:-1]],
-            "slots": [slot["device"].currentData().get_data(slot["extra"]) if slot["device"].currentData() is not None
+            "devices": [card.get_device_data() for card in self.cards[:-1]],
+            "slots": [slot["device"].currentData().get_slot_data(slot["extra"]) if slot["device"].currentData() is not None
                       else None for slot in self.slots],
             "slot_selections": [{"sample_name": self.slots[i]["sample_name"].text(),
                                  "device": self.slots[i]["device"].currentIndex(),
