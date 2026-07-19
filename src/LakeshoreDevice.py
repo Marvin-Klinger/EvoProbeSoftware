@@ -9,6 +9,7 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 import DefaultSettings as ds
+from GuiHelper import range_text_converter
 
 from collections import deque
 from threading import Thread, Lock
@@ -170,6 +171,8 @@ class LakeshoreCard(DeviceCard):
         self.use_ip = data.get("use_ip", False)
         self.ip = data.get("ip", "192.168.0.12")
 
+        self.channel_forms = []
+
         if self.use_usb == self.use_ip:
             self.use_usb = True
             self.use_ip = False
@@ -263,6 +266,105 @@ class LakeshoreCard(DeviceCard):
         connection_mode_holder.layout().addStretch()
         form_layout.addRow(connection_mode_holder)
 
+        connection_holder = qtw.QWidget()
+        connection_holder.setLayout(qtw.QHBoxLayout())
+        form_layout.addRow(connection_holder)
+        connection_status = qtw.QLabel("● connecting...")
+        connection_holder.layout().addWidget(connection_status)
+        connection_status.setStyleSheet("color: orange")
+        connection_holder.setFont(ds.FONT)
+        reconnect_btn = qtw.QPushButton("↻")
+        reconnect_btn.setContentsMargins(0, 0, 0, 0)
+        reconnect_btn.setFixedSize(25, 25)
+        reconnect_btn.hide()
+        connection_holder.layout().addWidget(reconnect_btn)
+        connection_holder.layout().addStretch()
+
+        # Channel Settings
+        tabs = qtw.QTabWidget()
+        layout.addWidget(tabs)
+        # tabs.hide()
+
+        for ch in range(5):
+            channel_holder = qtw.QWidget()
+            form_layout = qtw.QFormLayout()
+            channel_holder.setLayout(form_layout)
+            tabs.addTab(channel_holder, f"Ch_{'A' if ch == 0 else ch}")
+            channel_form = {"channel": "A" if ch == 0 else ch}
+
+            if ch != 0:  # is not Control Channel
+                excitation_mode = qtw.QComboBox()
+                excitation_mode.addItem("current", Model372.SensorExcitationMode.CURRENT)
+                excitation_mode.addItem("voltage", Model372.SensorExcitationMode.VOLTAGE)
+                form_layout.addRow("Excitation Mode:", excitation_mode)
+                channel_form["excitation_mode"] = excitation_mode
+
+            excitation_range = qtw.QComboBox()
+            for x in Model372.MeasurementInputCurrentRange:
+                excitation_range.addItem(range_text_converter(x.name), x)
+            form_layout.addRow("Excitation Range:", excitation_range)
+            channel_form["excitation_range"] = excitation_range
+
+            auto_range = qtw.QCheckBox()
+            auto_range.setStyleSheet("QCheckBox::indicator { width:20px; height: 20px;}")
+            form_layout.addRow("Auto Range:", auto_range)
+            channel_form["auto_range"] = auto_range
+
+            if ch != 0:
+                resistance_range = qtw.QComboBox()
+                for x in Model372.MeasurementInputResistance:
+                    resistance_range.addItem(range_text_converter(x.name), x)
+                resistance_range.setCurrentIndex(9)  # MeasurementInputResistance.RANGE_63_POINT_2_KIL_OHMS
+                form_layout.addRow("Resistance Range:", resistance_range)
+                channel_form["resistance_range"] = resistance_range
+
+                def on_excitation_mode_changed(value=0, _excitation_range=None):
+                    if _excitation_range is None:
+                        return
+
+                    _excitation_range.clear()
+                    if value == 0:
+                        for x in Model372.MeasurementInputCurrentRange:
+                            _excitation_range.addItem(range_text_converter(x.name), x)
+                        _excitation_range.setCurrentIndex(16)  # MeasurementInputCurrentRange.RANGE_100_MICRO_AMPS
+                    else:  # voltage TODO: sensible default value
+                        for x in Model372.MeasurementInputVoltageRange:
+                            _excitation_range.addItem(range_text_converter(x.name), x)
+                        _excitation_range.setCurrentIndex(0)
+
+                excitation_mode.currentIndexChanged.connect(lambda x, y=excitation_range: on_excitation_mode_changed(x, y))
+
+            use_filter = qtw.QCheckBox()
+            use_filter.setStyleSheet("QCheckBox::indicator { width:20px; height: 20px;}")
+            use_filter.setChecked(True)
+            form_layout.addRow("use filter: ", use_filter)
+            channel_form["use_filter"] = use_filter
+
+            settle_time = qtw.QSpinBox()
+            settle_time.setRange(1, 200)
+            settle_time.setValue(5)
+            settle_time.setSuffix("s")
+            settle_time.setButtonSymbols(qtw.QAbstractSpinBox.ButtonSymbols.NoButtons)
+            form_layout.addRow("settle time (1-200s): ", settle_time)
+            channel_form["settle_time"] = settle_time
+
+            window = qtw.QSpinBox()
+            window.setRange(1, 80)
+            window.setValue(10)
+            window.setSuffix("%")
+            window.setButtonSymbols(qtw.QAbstractSpinBox.ButtonSymbols.NoButtons)
+            form_layout.addRow("window (1-80%): ", window)
+            channel_form["window"] = window
+
+            def use_filter_changed(is_checked, _settle_time, _window):
+                _settle_time.setEnabled(is_checked)
+                _window.setEnabled(is_checked)
+
+            use_filter.stateChanged.connect(lambda a, b=settle_time, c=window: use_filter_changed(a, b, c))
+
+            self.channel_forms.append(channel_form)
+
+        # Bottom Buttons
         btn_holder = qtw.QWidget()
         btn_holder.setLayout(qtw.QHBoxLayout())
         btn_holder.setContentsMargins(0, 10, 0, 0)
@@ -280,7 +382,7 @@ class LakeshoreCard(DeviceCard):
             self.ip = ip_address.text()
             self.gui_setup.update_slots()
             self.gui_setup.save_setup_settings()
-            dlg.close()
+            # dlg.close()
 
         apply_btn.clicked.connect(apply_changes)
 
