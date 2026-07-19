@@ -77,3 +77,20 @@ def cascade_change_with_data(obj, data):
                 pass
     else:
         pass
+
+
+def range_text_converter(text: str):
+    text = text.replace("RANGE_", "")
+    text = text.replace("_POINT_", ".")
+    text = text.replace("MEGA_", "M")
+    text = text.replace("KIL_", "K")
+    text = text.replace("MILLI_", "m")
+    text = text.replace("MICRO_", "µ")
+    text = text.replace("NANO_", "n")
+    text = text.replace("PICO_", "p")
+    text = text.replace("AMPS", "A")
+    text = text.replace("AMP", "A")
+    text = text.replace("OHMS", "O")
+    text = text.replace("VOLTS", "V")
+    text = text.replace("_", " ")
+    return text
