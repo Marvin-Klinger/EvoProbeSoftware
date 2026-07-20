@@ -18,16 +18,19 @@ from itertools import chain
 
 class LakeshoreDevice:
     IP_ADDRESS = "192.168.0.12"
+    BAUD_RATE = 57600
     DEBUG_MODE = True
 
     Devices = {}
 
-    def __init__(self, scanner_interval=5):
+    def __init__(self, scanner_interval=5, baud_rate=BAUD_RATE, ip_address=IP_ADDRESS):
 
         self.lakeshore: Model372 = None
         self.input_channels = []
         self.scanner_queue = deque()
         self.scanner_interval = scanner_interval
+        self.baud_rate = baud_rate
+        self.ip_address = ip_address
         self.current_channel = None
         self.is_ready = False
         self.is_cycling = False
@@ -113,7 +116,7 @@ class LakeshoreDevice:
         self.lakeshore.configure_input(input_channel.value, settings)
 
     # establishes connection to the physical device
-    def connect(self):
+    def connect(self, use_usb=False, use_ip=False):
         print("connecting to lakeshore ...")
         self.lock.acquire(blocking=True)
         if self.lakeshore is not None:
@@ -128,19 +131,38 @@ class LakeshoreDevice:
             self.lock.release()
             return
 
-        try:
-            self.lakeshore = Model372(baud_rate=None, ip_address=LakeshoreDevice.IP_ADDRESS)
-        except:
-            print("couldn't connect to lakeshore\n"
-                  "trying again ...")
+        if use_usb == use_ip:
+            use_usb = True
+            use_ip = False
+
+        if use_usb:
             try:
-                self.lakeshore = Model372(baud_rate=None, ip_address=LakeshoreDevice.IP_ADDRESS)
+                self.lakeshore = Model372(baud_rate=self.baud_rate)
             except:
-                print("still couldn't connect to lakeshore\n"
-                      "aborting process")
-                self.connected = False
-                self.lock.release()
-                return
+                print("couldn't connect to lakeshore using usb\n"
+                      "trying again ...")
+                try:
+                    self.lakeshore = Model372(baud_rate=self.baud_rate)
+                except:
+                    print("still couldn't connect to lakeshore using usb\n"
+                          "aborting process")
+                    self.connected = False
+                    self.lock.release()
+                    return
+        elif use_ip:
+            try:
+                self.lakeshore = Model372(baud_rate=None, ip_address=self.ip_address)
+            except:
+                print("couldn't connect to lakeshore using ethernet\n"
+                      "trying again ...")
+                try:
+                    self.lakeshore = Model372(baud_rate=None, ip_address=self.ip_address)
+                except:
+                    print("still couldn't connect to lakeshore using ethernet\n"
+                          "aborting process")
+                    self.connected = False
+                    self.lock.release()
+                    return
         self.connected = True
         print("connection successful")
         self.lock.release()
@@ -176,6 +198,11 @@ class LakeshoreCard(DeviceCard):
         if self.use_usb == self.use_ip:
             self.use_usb = True
             self.use_ip = False
+
+        # references for live editing
+        self.connection_status = None
+        self.reconnect_btn = None
+        self.tabs = None
 
     def get_device_data(self, extra=None):
         data = {"id": self.id, "type": self.type, "name": self.name,
@@ -272,18 +299,21 @@ class LakeshoreCard(DeviceCard):
         connection_status = qtw.QLabel("● connecting...")
         connection_holder.layout().addWidget(connection_status)
         connection_status.setStyleSheet("color: orange")
-        connection_holder.setFont(ds.FONT)
+        connection_status.setFont(ds.FONT)
         reconnect_btn = qtw.QPushButton("↻")
         reconnect_btn.setContentsMargins(0, 0, 0, 0)
         reconnect_btn.setFixedSize(25, 25)
         reconnect_btn.hide()
         connection_holder.layout().addWidget(reconnect_btn)
         connection_holder.layout().addStretch()
+        self.connection_status = connection_status
+        self.reconnect_btn = reconnect_btn
 
         # Channel Settings
         tabs = qtw.QTabWidget()
         layout.addWidget(tabs)
-        # tabs.hide()
+        tabs.hide()
+        self.tabs = tabs
 
         for ch in range(5):
             channel_holder = qtw.QWidget()
@@ -363,6 +393,26 @@ class LakeshoreCard(DeviceCard):
             use_filter.stateChanged.connect(lambda a, b=settle_time, c=window: use_filter_changed(a, b, c))
 
             self.channel_forms.append(channel_form)
+
+        # Connect to Lakeshore async
+        def update_display():
+            lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
+                                        ip_address=ip_address.text())
+            lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
+            if not lakeshore.connected:
+                self.connection_status.setText("● Not Connected")
+                self.connection_status.setStyleSheet("color: red")
+                self.connection_status.setFont(ds.FONT)
+                self.reconnect_btn.show()
+                return
+
+            self.tabs.show()
+            self.connection_status.setText("● Connected")
+            self.connection_status.setStyleSheet("color: green")
+            self.connection_status.setFont(ds.FONT)
+
+        t = Thread(daemon=True, target=update_display)
+        t.start()
 
         # Bottom Buttons
         btn_holder = qtw.QWidget()

@@ -1,4 +1,5 @@
 import random
+import time
 
 from lakeshore import Model372, Model372InputSetupSettings
 
@@ -15,6 +16,7 @@ class Model372Mock(Model372):
         try:
             super().__init__(baud_rate, **kwargs)
         except:
+            time.sleep(1)
             print("DEBUG MODE IS ACTIVE")
 
     def get_all_input_readings(self, input_channel):
@@ -22,10 +24,10 @@ class Model372Mock(Model372):
         Model372Mock.RESISTANCE += random.randint(0, 8) - 4
         Model372Mock.POWER += random.randint(0, 4) - 2
         Model372Mock.QUADRATURE += random.randint(0, 2) - 1
-        return {"kelvin": max(0.01, Model372Mock.KELVIN),
-                "resistance": max(0.01, Model372Mock.RESISTANCE),
-                "power": max(0.01, Model372Mock.POWER),
-                "quadrature": max(0.01, Model372Mock.QUADRATURE)}
+        return {"kelvin": max(0.01, Model372Mock.KELVIN) + Model372Mock.SCANNER,
+                "resistance": max(0.01, Model372Mock.RESISTANCE) + Model372Mock.SCANNER,
+                "power": max(0.01, Model372Mock.POWER) + Model372Mock.SCANNER,
+                "quadrature": max(0.01, Model372Mock.QUADRATURE) + Model372Mock.SCANNER}
 
     def configure_input(self, input_channel, settings):
         print("configuring input")
