@@ -35,14 +35,23 @@ class Model372Mock(Model372):
         pass
 
     def get_input_setup_parameters(self, input_channel):
-        return Model372InputSetupSettings(1, 2, 1, True, 1, 3)
+        return Model372InputSetupSettings(Model372.SensorExcitationMode.CURRENT,
+                                          Model372.MeasurementInputCurrentRange.RANGE_3_POINT_16_MICRO_AMPS if input_channel != "A"
+                                          else Model372.ControlInputCurrentRange.RANGE_10_NANO_AMPS,
+                                          Model372.AutoRangeMode.CURRENT,
+                                          True,
+                                          Model372.InputSensorUnits.OHMS,
+                                          Model372.MeasurementInputResistance.RANGE_2_MEGA_OHMS)
 
     def set_filter(self, input_channel, state, settle_time, window):
         print("setting filter")
         pass
 
     def get_filter(self, input_channel):
-        return {}
+        if input_channel == "A":
+            return False, 10, 10
+        else:
+            return True, 16, 8
 
     def set_scanner_status(self, input_channel, status):
         print("settings scanner to ", input_channel)

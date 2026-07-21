@@ -115,6 +115,16 @@ class LakeshoreDevice:
     def configure(self, input_channel: Model372.InputChannel, settings: Model372InputSetupSettings):
         self.lakeshore.configure_input(input_channel.value, settings)
 
+    # returns ChannelInputSetupSettings for Channel
+    def get_input_setup_parameters(self, input_channel: Model372.InputChannel) -> Model372InputSetupSettings:
+        return self.lakeshore.get_input_setup_parameters(input_channel.value)
+
+    def set_filter(self, input_channel: Model372.InputChannel, state, settle_time, window):
+        self.lakeshore.set_filter(input_channel.value, state, settle_time, window)
+
+    def get_filter(self, input_channel: Model372.InputChannel):
+        return self.lakeshore.get_filter(input_channel.value)
+
     # establishes connection to the physical device
     def connect(self, use_usb=False, use_ip=False):
         print("connecting to lakeshore ...")
@@ -330,7 +340,7 @@ class LakeshoreCard(DeviceCard):
                 channel_form["excitation_mode"] = excitation_mode
 
             excitation_range = qtw.QComboBox()
-            for x in Model372.MeasurementInputCurrentRange:
+            for x in (Model372.MeasurementInputCurrentRange if ch != 0 else Model372.ControlInputCurrentRange):
                 excitation_range.addItem(range_text_converter(x.name), x)
             form_layout.addRow("Excitation Range:", excitation_range)
             channel_form["excitation_range"] = excitation_range
@@ -406,10 +416,26 @@ class LakeshoreCard(DeviceCard):
                 self.reconnect_btn.show()
                 return
 
-            self.tabs.show()
             self.connection_status.setText("● Connected")
             self.connection_status.setStyleSheet("color: green")
             self.connection_status.setFont(ds.FONT)
+            # TODO: fix whatever is wrong with this, sometimes it works sometimes it doesnt (thread seems to be problamatic, try qthread + signals)
+            time.sleep(0.2)
+            self.tabs.show()
+            print("tabs didnt error")
+
+            for ch in range(5):
+                settings = lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
+                form = self.channel_forms[ch]
+                form["excitation_range"].setCurrentIndex(settings.excitation_range.value-1)  # -1 cause people cant count
+                form["auto_range"].setChecked(settings.auto_range.value)
+                if ch != 0:
+                    form["excitation_mode"].setCurrentIndex(settings.mode.value)
+                    form["resistance_range"].setCurrentIndex(settings.resistance_range.value-1)
+                state, settle_time, window = lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
+                form["use_filter"].setChecked(state)
+                form["settle_time"].setValue(settle_time)
+                form["window"].setValue(window)
 
         t = Thread(daemon=True, target=update_display)
         t.start()
