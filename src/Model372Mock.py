@@ -44,7 +44,7 @@ class Model372Mock(Model372):
                                           Model372.MeasurementInputResistance.RANGE_2_MEGA_OHMS)
 
     def set_filter(self, input_channel, state, settle_time, window):
-        print("setting filter")
+        print("setting filter: ", input_channel, state, settle_time, window)
         pass
 
     def get_filter(self, input_channel):

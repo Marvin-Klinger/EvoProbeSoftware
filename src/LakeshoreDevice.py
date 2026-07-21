@@ -213,6 +213,7 @@ class LakeshoreCard(DeviceCard):
         self.connection_status = None
         self.reconnect_btn = None
         self.tabs = None
+        self.lakeshore = None
 
     def get_device_data(self, extra=None):
         data = {"id": self.id, "type": self.type, "name": self.name,
@@ -325,6 +326,7 @@ class LakeshoreCard(DeviceCard):
         tabs.hide()
         self.tabs = tabs
 
+        self.channel_forms = []
         for ch in range(5):
             channel_holder = qtw.QWidget()
             form_layout = qtw.QFormLayout()
@@ -406,10 +408,10 @@ class LakeshoreCard(DeviceCard):
 
         # Connect to Lakeshore async
         def update_display():
-            lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
+            self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
                                         ip_address=ip_address.text())
-            lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
-            if not lakeshore.connected:
+            self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
+            if not self.lakeshore.connected:
                 self.connection_status.setText("● Not Connected")
                 self.connection_status.setStyleSheet("color: red")
                 self.connection_status.setFont(ds.FONT)
@@ -420,25 +422,35 @@ class LakeshoreCard(DeviceCard):
             self.connection_status.setStyleSheet("color: green")
             self.connection_status.setFont(ds.FONT)
             # TODO: fix whatever is wrong with this, sometimes it works sometimes it doesnt (thread seems to be problamatic, try qthread + signals)
-            time.sleep(0.2)
+            time.sleep(0.5)
             self.tabs.show()
             print("tabs didnt error")
 
             for ch in range(5):
-                settings = lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
+                settings = self.lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
                 form = self.channel_forms[ch]
                 form["excitation_range"].setCurrentIndex(settings.excitation_range.value-1)  # -1 cause people cant count
                 form["auto_range"].setChecked(settings.auto_range.value)
                 if ch != 0:
                     form["excitation_mode"].setCurrentIndex(settings.mode.value)
                     form["resistance_range"].setCurrentIndex(settings.resistance_range.value-1)
-                state, settle_time, window = lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
+                state, settle_time, window = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
                 form["use_filter"].setChecked(state)
                 form["settle_time"].setValue(settle_time)
                 form["window"].setValue(window)
 
         t = Thread(daemon=True, target=update_display)
         t.start()
+
+        def reconnect():
+            self.connection_status.setText("● connecting...")
+            self.connection_status.setStyleSheet("color: orange")
+            self.connection_status.setFont(ds.FONT)
+            self.reconnect_btn.hide()
+            t = Thread(daemon=True, target=update_display)
+            t.start()
+
+        self.reconnect_btn.clicked.connect(reconnect)
 
         # Bottom Buttons
         btn_holder = qtw.QWidget()
@@ -460,15 +472,31 @@ class LakeshoreCard(DeviceCard):
             self.gui_setup.save_setup_settings()
             # dlg.close()
 
+            if self.lakeshore is not None and self.lakeshore.connected:
+                for ch in range(5):
+                    form = self.channel_forms[ch]
+                    if ch == 0:
+                        settings = Model372InputSetupSettings(mode=Model372.SensorExcitationMode.CURRENT,
+                                                              excitation_range=form["excitation_range"].currentData(),
+                                                              auto_range=form["auto_range"].isChecked(),
+                                                              current_source_shunted=False,
+                                                              units=Model372.InputSensorUnits.OHMS)
+                        self.lakeshore.configure(Model372.InputChannel("A"), settings)
+                    else:
+                        settings = Model372InputSetupSettings(mode=form["excitation_mode"].currentData(),
+                                                              excitation_range=form["excitation_range"].currentData(),
+                                                              auto_range=form["auto_range"].isChecked(),
+                                                              current_source_shunted=False,
+                                                              units=Model372.InputSensorUnits.OHMS,
+                                                              resistance_range=form["resistance_range"].currentData())
+                        self.lakeshore.configure(Model372.InputChannel(ch), settings)
+
+                    self.lakeshore.set_filter(input_channel=Model372.InputChannel("A" if ch == 0 else ch),
+                                              state=form["use_filter"].isChecked(),
+                                              settle_time=form["settle_time"].value(),
+                                              window=form["window"].value())
+
         apply_btn.clicked.connect(apply_changes)
 
         dlg.exec()
 
-
-if __name__ == "__main__":
-    device = LakeshoreDevice([Model372.InputChannel.CONTROL, Model372.InputChannel.ONE, Model372.InputChannel.TEN])
-    print(device.lakeshore.get_scanner_status())
-    device.set_next_scanner_position()
-    print(device.lakeshore.get_scanner_status())
-    device.set_next_scanner_position()
-    print(device.lakeshore.get_scanner_status())
