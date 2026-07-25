@@ -7,13 +7,15 @@ from MeasurementDevice import DeviceCard
 from ExtraClasses import MeasurementDeviceType as mdType
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThreadPool, QThread
 import DefaultSettings as ds
 from GuiHelper import range_text_converter
 
 from collections import deque
 from threading import Thread, Lock
 from itertools import chain
+
+from src.GuiThread import GuiThread
 
 
 class LakeshoreDevice:
@@ -288,7 +290,7 @@ class LakeshoreCard(DeviceCard):
         ip_address.setEnabled(self.use_ip)
         ip_holder.layout().addWidget(ip_address)
 
-        def connection_mode_change(usb_toggled = False, ip_toggled = False):
+        def connection_mode_change(usb_toggled=False, ip_toggled=False):
             if usb_toggled:
                 baud_rate.setEnabled(use_usb.isChecked())
                 ip_address.setDisabled(use_usb.isChecked())
@@ -374,7 +376,8 @@ class LakeshoreCard(DeviceCard):
                             _excitation_range.addItem(range_text_converter(x.name), x)
                         _excitation_range.setCurrentIndex(0)
 
-                excitation_mode.currentIndexChanged.connect(lambda x, y=excitation_range: on_excitation_mode_changed(x, y))
+                excitation_mode.currentIndexChanged.connect(
+                    lambda x, y=excitation_range: on_excitation_mode_changed(x, y))
 
             use_filter = qtw.QCheckBox()
             use_filter.setStyleSheet("QCheckBox::indicator { width:20px; height: 20px;}")
@@ -406,11 +409,14 @@ class LakeshoreCard(DeviceCard):
 
             self.channel_forms.append(channel_form)
 
+        def connect_lakeshore():
+            print("trying to connect")
+            self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
+                                             ip_address=ip_address.text())
+            self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
+
         # Connect to Lakeshore async
         def update_display():
-            self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
-                                        ip_address=ip_address.text())
-            self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
             if not self.lakeshore.connected:
                 self.connection_status.setText("● Not Connected")
                 self.connection_status.setStyleSheet("color: red")
@@ -421,26 +427,25 @@ class LakeshoreCard(DeviceCard):
             self.connection_status.setText("● Connected")
             self.connection_status.setStyleSheet("color: green")
             self.connection_status.setFont(ds.FONT)
-            # TODO: fix whatever is wrong with this, sometimes it works sometimes it doesnt (thread seems to be problamatic, try qthread + signals)
-            time.sleep(0.5)
             self.tabs.show()
-            print("tabs didnt error")
 
             for ch in range(5):
                 settings = self.lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
                 form = self.channel_forms[ch]
-                form["excitation_range"].setCurrentIndex(settings.excitation_range.value-1)  # -1 cause people cant count
+                form["excitation_range"].setCurrentIndex(
+                    settings.excitation_range.value - 1)  # -1 cause people cant count
                 form["auto_range"].setChecked(settings.auto_range.value)
                 if ch != 0:
                     form["excitation_mode"].setCurrentIndex(settings.mode.value)
-                    form["resistance_range"].setCurrentIndex(settings.resistance_range.value-1)
+                    form["resistance_range"].setCurrentIndex(settings.resistance_range.value - 1)
                 state, settle_time, window = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
                 form["use_filter"].setChecked(state)
                 form["settle_time"].setValue(settle_time)
                 form["window"].setValue(window)
 
-        t = Thread(daemon=True, target=update_display)
+        t = GuiThread(target=connect_lakeshore)
         t.start()
+        t.finished.connect(update_display)
 
         def reconnect():
             self.connection_status.setText("● connecting...")
@@ -499,4 +504,3 @@ class LakeshoreCard(DeviceCard):
         apply_btn.clicked.connect(apply_changes)
 
         dlg.exec()
-
