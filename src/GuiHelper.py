@@ -81,6 +81,7 @@ def cascade_change_with_data(obj, data):
 
 def range_text_converter(text: str):
     text = text.replace("RANGE_", "")
+    text = text.replace("FREQUENCY_", "")
     text = text.replace("_POINT_", ".")
     text = text.replace("MEGA_", "M")
     text = text.replace("KIL_", "K")

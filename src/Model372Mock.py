@@ -53,6 +53,13 @@ class Model372Mock(Model372):
         else:
             return True, 16, 8
 
+    def set_excitation_frequency(self, input_channel, frequency):
+        print("setting frequency of ", input_channel, " to ", frequency)
+
+    def get_excitation_frequency(self, input_channel):
+        return Model372.InputFrequency.FREQUENCY_13_POINT_7_HZ if input_channel == 0 \
+            else Model372.InputFrequency.FREQUENCY_9_POINT_8_HZ
+
     def set_scanner_status(self, input_channel, status):
         print("settings scanner to ", input_channel)
         Model372Mock.SCANNER = input_channel

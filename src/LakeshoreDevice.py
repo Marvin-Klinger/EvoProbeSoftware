@@ -127,6 +127,12 @@ class LakeshoreDevice:
     def get_filter(self, input_channel: Model372.InputChannel):
         return self.lakeshore.get_filter(input_channel.value)
 
+    def set_excitation_frequency(self, input_channel: Model372.InputChannel, frequency: Model372.InputFrequency):
+        self.lakeshore.set_excitation_frequency(input_channel.value, frequency)
+
+    def get_excitation_frequency(self, input_channel: Model372.InputChannel) -> Model372.InputFrequency:
+        return self.lakeshore.get_excitation_frequency(input_channel.value)
+
     # establishes connection to the physical device
     def connect(self, use_usb=False, use_ip=False):
         print("connecting to lakeshore ...")
@@ -336,12 +342,27 @@ class LakeshoreCard(DeviceCard):
             tabs.addTab(channel_holder, f"Ch_{'A' if ch == 0 else ch}")
             channel_form = {"channel": "A" if ch == 0 else ch}
 
+            excitation_frequency = qtw.QComboBox()
+            for item in Model372.InputFrequency:
+                excitation_frequency.addItem(range_text_converter(item.name), item)
+                channel_form["excitation_frequency"] = excitation_frequency
+
             if ch != 0:  # is not Control Channel
+                form_layout.addRow("Excitation Frequency:", excitation_frequency)
+
+                def on_change_frequency(index):
+                    for i in range(1, 5):
+                        self.channel_forms[i]["excitation_frequency"].setCurrentIndex(index)
+
+                excitation_frequency.currentIndexChanged.connect(on_change_frequency)
+
                 excitation_mode = qtw.QComboBox()
                 excitation_mode.addItem("voltage", Model372.SensorExcitationMode.VOLTAGE)
                 excitation_mode.addItem("current", Model372.SensorExcitationMode.CURRENT)
                 form_layout.addRow("Excitation Mode:", excitation_mode)
                 channel_form["excitation_mode"] = excitation_mode
+            else:
+                form_layout.addRow("Excitation Frequency:", excitation_frequency)
 
             excitation_range = qtw.QComboBox()
             for x in (Model372.MeasurementInputCurrentRange if ch != 0 else Model372.ControlInputCurrentRange):
@@ -366,7 +387,6 @@ class LakeshoreCard(DeviceCard):
                     if _excitation_range is None:
                         return
 
-                    print("mode changed")
                     _excitation_range.clear()
                     if value == Model372.SensorExcitationMode.CURRENT:
                         for x in Model372.MeasurementInputCurrentRange:
@@ -376,7 +396,6 @@ class LakeshoreCard(DeviceCard):
                         for x in Model372.MeasurementInputVoltageRange:
                             _excitation_range.addItem(range_text_converter(x.name), x)
                         _excitation_range.setCurrentIndex(0)
-                    print("done changing")
 
                 excitation_mode.currentIndexChanged.connect(
                     lambda x, y=excitation_range: on_excitation_mode_changed(x, y))
@@ -412,7 +431,6 @@ class LakeshoreCard(DeviceCard):
             self.channel_forms.append(channel_form)
 
         def connect_lakeshore():
-            print("trying to connect")
             self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
                                              ip_address=ip_address.text())
             self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
@@ -435,11 +453,11 @@ class LakeshoreCard(DeviceCard):
             for ch in range(5):
                 settings = self.lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
                 form = self.channel_forms[ch]
+                form["excitation_frequency"].setCurrentIndex(
+                    self.lakeshore.get_excitation_frequency(Model372.InputChannel("A" if ch == 0 else 0)).value - 1)
                 if ch != 0:
-                    print("changing mode")
                     form["excitation_mode"].setCurrentIndex(settings.mode.value)
                     form["resistance_range"].setCurrentIndex(settings.resistance_range.value - 1)
-                print("setting range", settings.excitation_range)
                 form["excitation_range"].setCurrentIndex(settings.excitation_range.value - 1)
                 form["auto_range"].setChecked(settings.auto_range.value)
                 state, settle_time, window = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
@@ -482,6 +500,10 @@ class LakeshoreCard(DeviceCard):
             # dlg.close()
 
             if self.lakeshore is not None and self.lakeshore.connected:
+                self.lakeshore.set_excitation_frequency(Model372.InputChannel.CONTROL,
+                                                        self.channel_forms[0]["excitation_frequency"].currentData())
+                self.lakeshore.set_excitation_frequency(Model372.InputChannel(0),
+                                                        self.channel_forms[1]["excitation_frequency"].currentData())
                 for ch in range(5):
                     form = self.channel_forms[ch]
                     if ch == 0:
