@@ -338,8 +338,8 @@ class LakeshoreCard(DeviceCard):
 
             if ch != 0:  # is not Control Channel
                 excitation_mode = qtw.QComboBox()
-                excitation_mode.addItem("current", Model372.SensorExcitationMode.CURRENT)
                 excitation_mode.addItem("voltage", Model372.SensorExcitationMode.VOLTAGE)
+                excitation_mode.addItem("current", Model372.SensorExcitationMode.CURRENT)
                 form_layout.addRow("Excitation Mode:", excitation_mode)
                 channel_form["excitation_mode"] = excitation_mode
 
@@ -366,8 +366,9 @@ class LakeshoreCard(DeviceCard):
                     if _excitation_range is None:
                         return
 
+                    print("mode changed")
                     _excitation_range.clear()
-                    if value == 0:
+                    if value == Model372.SensorExcitationMode.CURRENT:
                         for x in Model372.MeasurementInputCurrentRange:
                             _excitation_range.addItem(range_text_converter(x.name), x)
                         _excitation_range.setCurrentIndex(16)  # MeasurementInputCurrentRange.RANGE_100_MICRO_AMPS
@@ -375,6 +376,7 @@ class LakeshoreCard(DeviceCard):
                         for x in Model372.MeasurementInputVoltageRange:
                             _excitation_range.addItem(range_text_converter(x.name), x)
                         _excitation_range.setCurrentIndex(0)
+                    print("done changing")
 
                 excitation_mode.currentIndexChanged.connect(
                     lambda x, y=excitation_range: on_excitation_mode_changed(x, y))
@@ -428,16 +430,18 @@ class LakeshoreCard(DeviceCard):
             self.connection_status.setStyleSheet("color: green")
             self.connection_status.setFont(ds.FONT)
             self.tabs.show()
+            self.reconnect_btn.show()
 
             for ch in range(5):
                 settings = self.lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
                 form = self.channel_forms[ch]
-                form["excitation_range"].setCurrentIndex(
-                    settings.excitation_range.value - 1)  # -1 cause people cant count
-                form["auto_range"].setChecked(settings.auto_range.value)
                 if ch != 0:
+                    print("changing mode")
                     form["excitation_mode"].setCurrentIndex(settings.mode.value)
                     form["resistance_range"].setCurrentIndex(settings.resistance_range.value - 1)
+                print("setting range", settings.excitation_range)
+                form["excitation_range"].setCurrentIndex(settings.excitation_range.value - 1)
+                form["auto_range"].setChecked(settings.auto_range.value)
                 state, settle_time, window = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
                 form["use_filter"].setChecked(state)
                 form["settle_time"].setValue(settle_time)
