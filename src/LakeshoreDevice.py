@@ -89,7 +89,11 @@ class LakeshoreDevice:
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self, input_channel: Model372.InputChannel):
-        return self.lakeshore.get_all_input_readings(input_channel.value)
+        if (not self.connected or (self.current_channel != input_channel or not self.is_ready) and
+                input_channel != Model372.InputChannel.CONTROL):
+            return {k: np.nan for k in ["kelvin", "resistance", "power", "quadrature"]}
+        else:
+            return self.lakeshore.get_all_input_readings(input_channel.value)
 
     # sets scanner to next channel in scanner_queue
     def set_next_scanner_position(self):
@@ -112,6 +116,22 @@ class LakeshoreDevice:
 
             t = Thread(target=wait_for_ready, daemon=True)
             t.start()
+
+    def set_scanner_position(self, input_channel: Model372.InputChannel):
+        if input_channel == Model372.InputChannel.CONTROL or input_channel == self.current_channel:
+            return
+
+        self.lakeshore.set_scanner_status(input_channel.value, False)
+        self.current_channel = input_channel
+        self.is_ready = False
+
+        def wait_for_ready():
+            # TODO: find actual settle time
+            time.sleep(1)
+            self.is_ready = True
+
+        t = Thread(target=wait_for_ready, daemon=True)
+        t.start()
 
     # configures physical device
     def configure(self, input_channel: Model372.InputChannel, settings: Model372InputSetupSettings):
@@ -212,6 +232,7 @@ class LakeshoreCard(DeviceCard):
         self.ip = data.get("ip", "192.168.0.12")
 
         self.channel_forms = []
+        self.edit_window_is_open = False
 
         if self.use_usb == self.use_ip:
             self.use_usb = True
@@ -256,6 +277,7 @@ class LakeshoreCard(DeviceCard):
         dlg.setFont(ds.FONT)
         layout = qtw.QVBoxLayout()
         dlg.setLayout(layout)
+        self.edit_window_is_open = True
 
         # Settings
         form_holder = qtw.QWidget()
@@ -341,6 +363,11 @@ class LakeshoreCard(DeviceCard):
             channel_holder.setLayout(form_layout)
             tabs.addTab(channel_holder, f"Ch_{'A' if ch == 0 else ch}")
             channel_form = {"channel": "A" if ch == 0 else ch}
+
+            readings = qtw.QLabel("[...]")
+            readings.setContentsMargins(0, 0, 0, 10)
+            form_layout.addRow(readings)
+            channel_form["readings"] = readings
 
             excitation_frequency = qtw.QComboBox()
             for item in Model372.InputFrequency:
@@ -430,6 +457,12 @@ class LakeshoreCard(DeviceCard):
 
             self.channel_forms.append(channel_form)
 
+        def tab_changed(x):
+            if x > 0:
+                self.lakeshore.set_scanner_position(Model372.InputChannel(x))
+
+        self.tabs.currentChanged.connect(tab_changed)
+
         def connect_lakeshore():
             self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
                                              ip_address=ip_address.text())
@@ -448,7 +481,7 @@ class LakeshoreCard(DeviceCard):
             self.connection_status.setStyleSheet("color: green")
             self.connection_status.setFont(ds.FONT)
             self.tabs.show()
-            self.reconnect_btn.show()
+            # self.reconnect_btn.show()
 
             for ch in range(5):
                 settings = self.lakeshore.get_input_setup_parameters(Model372.InputChannel("A" if ch == 0 else ch))
@@ -464,6 +497,17 @@ class LakeshoreCard(DeviceCard):
                 form["use_filter"].setChecked(state)
                 form["settle_time"].setValue(settle_time)
                 form["window"].setValue(window)
+
+            def update_readings():
+                while self.edit_window_is_open:
+                    for ch in range(len(self.channel_forms)):
+                        reading = self.lakeshore.get_readings(Model372.InputChannel("A" if ch == 0 else ch))
+                        formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in reading.items()]) + "]"
+                        self.channel_forms[ch]["readings"].setText(formatted)
+                    time.sleep(1)
+
+            t = Thread(daemon=True, target=update_readings)
+            t.start()
 
         t = GuiThread(target=connect_lakeshore)
         t.start()
