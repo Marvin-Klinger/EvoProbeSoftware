@@ -12,5 +12,7 @@ class DeviceInfo:
 class MeasurementDeviceType(IntEnum):
     DUMMY = 0
     LAKESHORE = 1
-    MPV = 2
+    PPMS6000 = 2
+    DYNACOOL = 3
+    MPV = 4
 

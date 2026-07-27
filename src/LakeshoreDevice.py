@@ -225,7 +225,6 @@ class LakeshoreCard(DeviceCard):
     def __init__(self, gui_setup, data):
         super().__init__(gui_setup, data)
 
-        # self.channel = Model372.InputChannel(data.get("channel", "A"))
         self.use_usb = data.get("use_usb", True)
         self.baud_rate = data.get("baud_rate", 57600)
         self.use_ip = data.get("use_ip", False)
@@ -375,7 +374,7 @@ class LakeshoreCard(DeviceCard):
                 channel_form["excitation_frequency"] = excitation_frequency
 
             if ch != 0:  # is not Control Channel
-                form_layout.addRow("Excitation Frequency:", excitation_frequency)
+                form_layout.addRow("Excitation Frequency ", excitation_frequency)
 
                 def on_change_frequency(index):
                     for i in range(1, 5):
@@ -386,20 +385,20 @@ class LakeshoreCard(DeviceCard):
                 excitation_mode = qtw.QComboBox()
                 excitation_mode.addItem("voltage", Model372.SensorExcitationMode.VOLTAGE)
                 excitation_mode.addItem("current", Model372.SensorExcitationMode.CURRENT)
-                form_layout.addRow("Excitation Mode:", excitation_mode)
+                form_layout.addRow("Excitation Mode ", excitation_mode)
                 channel_form["excitation_mode"] = excitation_mode
             else:
-                form_layout.addRow("Excitation Frequency:", excitation_frequency)
+                form_layout.addRow("Excitation Frequency ", excitation_frequency)
 
             excitation_range = qtw.QComboBox()
             for x in (Model372.MeasurementInputCurrentRange if ch != 0 else Model372.ControlInputCurrentRange):
                 excitation_range.addItem(range_text_converter(x.name), x)
-            form_layout.addRow("Excitation Range:", excitation_range)
+            form_layout.addRow("Excitation Range ", excitation_range)
             channel_form["excitation_range"] = excitation_range
 
             auto_range = qtw.QCheckBox()
             auto_range.setStyleSheet("QCheckBox::indicator { width:20px; height: 20px;}")
-            form_layout.addRow("Auto Range:", auto_range)
+            form_layout.addRow("Auto Range ", auto_range)
             channel_form["auto_range"] = auto_range
 
             if ch != 0:
@@ -407,7 +406,7 @@ class LakeshoreCard(DeviceCard):
                 for x in Model372.MeasurementInputResistance:
                     resistance_range.addItem(range_text_converter(x.name), x)
                 resistance_range.setCurrentIndex(9)  # MeasurementInputResistance.RANGE_63_POINT_2_KIL_OHMS
-                form_layout.addRow("Resistance Range:", resistance_range)
+                form_layout.addRow("Resistance Range ", resistance_range)
                 channel_form["resistance_range"] = resistance_range
 
                 def on_excitation_mode_changed(value=0, _excitation_range=None):
@@ -430,7 +429,7 @@ class LakeshoreCard(DeviceCard):
             use_filter = qtw.QCheckBox()
             use_filter.setStyleSheet("QCheckBox::indicator { width:20px; height: 20px;}")
             use_filter.setChecked(True)
-            form_layout.addRow("use filter: ", use_filter)
+            form_layout.addRow("use filter ", use_filter)
             channel_form["use_filter"] = use_filter
 
             settle_time = qtw.QSpinBox()
@@ -438,7 +437,7 @@ class LakeshoreCard(DeviceCard):
             settle_time.setValue(5)
             settle_time.setSuffix("s")
             settle_time.setButtonSymbols(qtw.QAbstractSpinBox.ButtonSymbols.NoButtons)
-            form_layout.addRow("settle time (1-200s): ", settle_time)
+            form_layout.addRow("settle time (1-200s) ", settle_time)
             channel_form["settle_time"] = settle_time
 
             window = qtw.QSpinBox()
@@ -446,7 +445,7 @@ class LakeshoreCard(DeviceCard):
             window.setValue(10)
             window.setSuffix("%")
             window.setButtonSymbols(qtw.QAbstractSpinBox.ButtonSymbols.NoButtons)
-            form_layout.addRow("window (1-80%): ", window)
+            form_layout.addRow("window (1-80%) ", window)
             channel_form["window"] = window
 
             def use_filter_changed(is_checked, _settle_time, _window):
@@ -503,7 +502,10 @@ class LakeshoreCard(DeviceCard):
                     for ch in range(len(self.channel_forms)):
                         reading = self.lakeshore.get_readings(Model372.InputChannel("A" if ch == 0 else ch))
                         formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in reading.items()]) + "]"
-                        self.channel_forms[ch]["readings"].setText(formatted)
+                        try:
+                            self.channel_forms[ch]["readings"].setText(formatted)
+                        except RuntimeError:
+                            return
                     time.sleep(1)
 
             t = Thread(daemon=True, target=update_readings)

@@ -11,13 +11,14 @@ import src.FileHandler as FileHandler
 from MeasurementDevice import MeasurementDevice
 from LakeshoreDevice import LakeshoreDevice
 from src.MPVWrapper import MPVWrapper
+from PPMS6000 import PPMS6000
 
 
 class GuiSetup(qtw.QWidget):
     DEVICES = {
         mdType.DUMMY: MeasurementDevice,
         mdType.LAKESHORE: LakeshoreDevice,
-        mdType.MPV: MPVWrapper
+        mdType.PPMS6000: PPMS6000
     }
 
     def __init__(self, main_window):
