@@ -128,7 +128,7 @@ class LiveGraph(Process):
                 self.ylim_values[1] = y_vals[-1]
 
         if self.auto_xlim:
-            plt.xlim(x_vals[0], max(10, x_vals[-1]))
+            plt.xlim(max(x_vals[0], x_vals[-1] - 1000), max(10, x_vals[-1]))
         if self.auto_ylim:
             plt.ylim(self.ylim_values[0] * 0.9, self.ylim_values[1] * 1.1)
 
@@ -136,12 +136,12 @@ class LiveGraph(Process):
         self.fig.canvas.flush_events()
 
         # used for performance testing
-        # temp = time.monotonic()
-        # self.timer += temp - self.timestamp
-        # if self.timer > 1:
-        #     self.timer = 0
-        #     print(f"time: {temp - self.timestamp}\nfps: {(temp - self.timestamp) ** -1}")
-        # self.timestamp = temp
+        temp = time.monotonic()
+        self.timer += temp - self.timestamp
+        if self.timer > 1:
+            self.timer = 0
+            print(f"time: {temp - self.timestamp}\nfps: {(temp - self.timestamp) ** -1}")
+        self.timestamp = temp
 
 
 class QueueItemType(Enum):

@@ -231,6 +231,7 @@ class LakeshoreCard(DeviceCard):
         self.ip = data.get("ip", "192.168.0.12")
 
         self.channel_forms = []
+        # TODO: make this into instance id and sync with thread
         self.edit_window_is_open = False
 
         if self.use_usb == self.use_ip:
@@ -467,7 +468,6 @@ class LakeshoreCard(DeviceCard):
                                              ip_address=ip_address.text())
             self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
 
-        # Connect to Lakeshore async
         def update_display():
             if not self.lakeshore.connected:
                 self.connection_status.setText("● Not Connected")
