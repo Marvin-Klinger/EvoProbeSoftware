@@ -67,14 +67,17 @@ class PPMS6000Card(DeviceCard):
     def __init__(self, gui_setup, data):
         super().__init__(gui_setup, data)
 
-        print(data)
-        self.current_limit = data.get("current_limit", 10)
-        self.power_limit = data.get("power_limit", 100)
-        self.voltage_limit = data.get("voltage_limit", 5)
-        self.calibration_mode = data.get("calibration_mode", 0)
-        self.drive_mode = data.get("drive_mode", 0)
+        self.channel_settings = {}
+        for ch in BridgeChannel:
+            ch_data = data.get("channel_settings", {}).get(str(ch), {})
+            settings = {"current_limit": ch_data.get("current_limit", 10),
+                        "power_limit": ch_data.get("power_limit", 100),
+                        "voltage_limit": ch_data.get("voltage_limit", 5),
+                        "calibration_mode": ch_data.get("calibration_mode", 0),
+                        "drive_mode": ch_data.get("drive_mode", 0)}
+            self.channel_settings[ch] = settings
 
-        self.channel_forms = []
+        self.channel_forms = {}
 
         # references for live editing
         self.connection_status = None
@@ -84,9 +87,7 @@ class PPMS6000Card(DeviceCard):
 
     def get_device_data(self):
         return {"id": self.id, "type": self.type, "name": self.name,
-                "current_limit": self.current_limit, "power_limit": self.power_limit,
-                "voltage_limit": self.voltage_limit, "calibration_mode": self.calibration_mode,
-                "drive_mode": self.calibration_mode}
+                "channel_settings": self.channel_settings}
 
     def get_slot_data(self, extra=None):
         data = {"id": self.id, "type": self.type, "name": self.name}
@@ -149,8 +150,10 @@ class PPMS6000Card(DeviceCard):
         tabs.hide()
         self.tabs = tabs
 
-        self.channel_forms = []
-        for ch in range(1, 5):
+        self.channel_forms = {}
+        for ch in BridgeChannel:
+            settings = self.channel_settings[ch]
+
             channel_holder = qtw.QWidget()
             form_layout = qtw.QFormLayout()
             channel_holder.setLayout(form_layout)
@@ -164,19 +167,19 @@ class PPMS6000Card(DeviceCard):
 
             current_limit = qtw.QLineEdit()
             current_limit.setValidator(qtg.QDoubleValidator())
-            current_limit.setText(str(self.current_limit))
+            current_limit.setText(str(settings["current_limit"]))
             form_layout.addRow("Current Limit ", current_limit)
             channel_form["current_limit"] = current_limit
 
             power_limit = qtw.QLineEdit()
             power_limit.setValidator(qtg.QDoubleValidator())
-            power_limit.setText(str(self.power_limit))
+            power_limit.setText(str(settings["power_limit"]))
             form_layout.addRow("Power Limit ", power_limit)
             channel_form["power_limit"] = power_limit
 
             voltage_limit = qtw.QLineEdit()
             voltage_limit.setValidator(qtg.QDoubleValidator())
-            voltage_limit.setText(str(self.voltage_limit))
+            voltage_limit.setText(str(settings["voltage_limit"]))
             form_layout.addRow("Voltage Limit ", voltage_limit)
             channel_form["voltage_limit"] = voltage_limit
 
@@ -184,18 +187,18 @@ class PPMS6000Card(DeviceCard):
             calibration_mode.addItem("Standard", CalibrationMode.STANDARD)
             calibration_mode.addItem("Fast", CalibrationMode.FAST)
             calibration_mode.addItem("Hi-Res", CalibrationMode.HI_RES)
-            calibration_mode.setCurrentIndex(self.calibration_mode)
+            calibration_mode.setCurrentIndex(settings["calibration_mode"])
             form_layout.addRow("Calibration Mode ", calibration_mode)
             channel_form["calibration_mode"] = calibration_mode
 
             drive_mode = qtw.QComboBox()
             drive_mode.addItem("AC", DriveMode.AC)
             drive_mode.addItem("DC", DriveMode.DC)
-            drive_mode.setCurrentIndex(self.drive_mode)
+            drive_mode.setCurrentIndex(settings["drive_mode"])
             form_layout.addRow("Drive Mode ", drive_mode)
             channel_form["drive_mode"] = drive_mode
 
-            self.channel_forms.append(channel_form)
+            self.channel_forms[ch] = channel_form
 
         def tab_changed(x):
             pass
@@ -227,8 +230,7 @@ class PPMS6000Card(DeviceCard):
             def update_readings():
                 while True:
                     readings = self.ppms.get_readings()
-                    for form in self.channel_forms:
-                        ch = form["channel"]
+                    for ch, form in self.channel_forms.items():
                         formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in readings[ch].items()]) + "]"
                         try:
                             form["readings"].setText(formatted)
@@ -264,11 +266,13 @@ class PPMS6000Card(DeviceCard):
         def apply_changes():
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
-            self.current_limit = current_limit.text()
-            self.voltage_limit = voltage_limit.text()
-            self.power_limit = power_limit.text()
-            self.calibration_mode = calibration_mode.currentData()
-            self.drive_mode = drive_mode.currentData()
+            for ch, form in self.channel_forms.items():
+                settings = self.channel_settings[ch]
+                settings["current_limit"] = form["current_limit"].text()
+                settings["voltage_limit"] = form["voltage_limit"].text()
+                settings["power_limit"] = form["power_limit"].text()
+                settings["calibration_mode"] = form["calibration_mode"].currentData()
+                settings["drive_mode"] = form["drive_mode"].currentData()
 
             self.gui_setup.update_slots()
             self.gui_setup.save_setup_settings()
