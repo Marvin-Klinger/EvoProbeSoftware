@@ -6,6 +6,7 @@ from lakeshore import Model372
 from itertools import chain
 
 import DefaultSettings as ds
+from src.Dynacool import Dynacool
 from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.FileHandler as FileHandler
 from MeasurementDevice import MeasurementDevice
@@ -18,7 +19,8 @@ class GuiSetup(qtw.QWidget):
     DEVICES = {
         mdType.DUMMY: MeasurementDevice,
         mdType.LAKESHORE: LakeshoreDevice,
-        mdType.PPMS6000: PPMS6000
+        mdType.PPMS6000: PPMS6000,
+        mdType.DYNACOOL: Dynacool
     }
 
     def __init__(self, main_window):

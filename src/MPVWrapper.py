@@ -2,6 +2,7 @@ import traceback
 
 import MultiPyVu as mpv
 import numpy as np
+from enum import IntEnum
 
 import threading
 
@@ -186,3 +187,21 @@ class MPVCard(DeviceCard):
     #     apply_btn.clicked.connect(apply_changes)
     #
     #     dlg.exec()
+
+
+class CalibrationMode(IntEnum):
+    STANDARD = 0
+    FAST = 1
+    HI_RES = 2
+
+
+class DriveMode(IntEnum):
+    AC = 0
+    DC = 1
+
+
+class BridgeChannel(IntEnum):
+    CHANNEL_1 = 1
+    CHANNEL_2 = 2
+    CHANNEL_3 = 3
+    CHANNEL_4 = 4
