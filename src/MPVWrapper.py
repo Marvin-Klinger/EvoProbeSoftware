@@ -17,11 +17,10 @@ from ExtraClasses import MeasurementDeviceType as mdType
 import DefaultSettings as ds
 
 
-class MPVWrapper(MeasurementDevice):
+class MPVWrapper:
+    device = None
 
-    def __init__(self, data):
-        super().__init__(data)
-
+    def __init__(self):
         self.server = None
         self.client = None
         self.lock = threading.Lock()
@@ -32,6 +31,7 @@ class MPVWrapper(MeasurementDevice):
         self.keys = ["temperature", "field"]
         self.logging_keys = ["temp", "field"]
         self.plotting_keys = ["temp", "field"]
+        self.connected = False
 
         self.key_to_function = {"temperature": self.get_temperature,
                                 "field": self.get_field}
@@ -101,6 +101,20 @@ class MPVWrapper(MeasurementDevice):
         self.lock.release()
         return value
 
+    def get_channel_reading(self, bridge_channel: int):
+        value = {"current": np.nan, "resistance": np.nan}
+        if not self.connected:
+            return value
+
+        self.lock.acquire(blocking=True)
+        try:
+            value["current"] = self.client.resistivity.get_current(bridge_channel)
+            value["resistance"] = self.client.resistivity.get_resistance(bridge_channel)
+        except:
+            print("couldn't read bridge channel")
+        self.lock.release()
+        return value
+
     # handles shutting down the properties in this wrapper
     def shutdown(self):
         self.client.close_client()
@@ -116,77 +130,10 @@ class MPVWrapper(MeasurementDevice):
         self.lock.release()
 
     @staticmethod
-    def get_card(gui_setup, data=None):
-        return MPVCard(gui_setup, data if data is not None else {})
-
-
-class MPVCard(DeviceCard):
-    NAME = "MultiPyVu"
-    TYPE = mdType.MPV
-
-    def __init__(self, gui_setup, data):
-        super().__init__(gui_setup, data)
-
-    def get_data(self, extra=None):
-        data = {"id": self.id, "type": self.type, "name": self.name}
-        return data
-
-    # def get_extra(self, slot, selection=None):
-    #     index = selection if selection is not None else 0
-    #     extra = qtw.QComboBox()
-    #     extra.addItem("Channel A", Model372.InputChannel.CONTROL)
-    #     for i in range(1, 5):
-    #         extra.addItem(f"Channel {i}", Model372.InputChannel(i))
-    #     extra.setCurrentIndex(index)
-    #
-    #     def on_change():
-    #         self.gui_setup.slot_selections[slot]["extra"] = extra.currentIndex()
-    #         self.gui_setup.save_setup_settings()
-    #
-    #     extra.activated.connect(on_change)
-    #     return extra
-    #
-    # def open_edit_window(self):
-    #     dlg = qtw.QDialog(self)
-    #     dlg.setWindowTitle("edit")
-    #     dlg.setFont(ds.FONT)
-    #     layout = qtw.QVBoxLayout()
-    #     dlg.setLayout(layout)
-    #
-    #     # Settings
-    #     form_holder = qtw.QWidget()
-    #     form_holder.setFont(ds.FONT)
-    #     form_layout = qtw.QFormLayout()
-    #     form_holder.setLayout(form_layout)
-    #     layout.addWidget(form_holder)
-    #
-    #     name = qtw.QLineEdit()
-    #     name.setText(self.name)
-    #     form_layout.addRow("Name ", name)
-    #
-    #     ip_address = qtw.QLineEdit()
-    #     ip_address.setInputMask("000.000.0.00;_")
-    #     ip_address.setText(self.ip)
-    #     form_layout.addRow("ip: ", ip_address)
-    #
-    #     btn_holder = qtw.QWidget()
-    #     btn_holder.setLayout(qtw.QHBoxLayout())
-    #     btn_holder.setContentsMargins(0, 10, 0, 0)
-    #     layout.addWidget(btn_holder)
-    #     btn_holder.layout().addStretch()
-    #     apply_btn = qtw.QPushButton("Apply")
-    #     btn_holder.layout().addWidget(apply_btn)
-    #
-    #     def apply_changes():
-    #         self.name = name.text()
-    #         self.gui_elements["name"].setText(self.name)
-    #         self.gui_setup.update_slots()
-    #         self.gui_setup.save_setup_settings()
-    #         dlg.close()
-    #
-    #     apply_btn.clicked.connect(apply_changes)
-    #
-    #     dlg.exec()
+    def get_device():
+        if MPVWrapper.device is None:
+            MPVWrapper.device = MPVWrapper()
+        return MPVWrapper.device
 
 
 class CalibrationMode(IntEnum):
