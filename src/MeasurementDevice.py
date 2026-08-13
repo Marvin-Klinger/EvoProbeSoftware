@@ -1,5 +1,7 @@
 from enum import Enum
 from threading import Thread
+import os
+import pandas as pd
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
@@ -20,6 +22,9 @@ class MeasurementDevice:
         self.logging_keys = []
         self.plotting_keys = []
         self.connected = False
+        self.name = data.get("name", "no_name")
+        self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
+        self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", str(self.name) + ".csv"))
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -32,6 +37,11 @@ class MeasurementDevice:
         for key in self.keys:
             logging_readings.append(readings[key])
         return logging_readings
+
+    def log_reading(self, readings):
+        self.df.loc[len(self.df)] = readings
+        with open(self.save_path, "a") as file:
+            file.write(",".join([str(i) for i in readings]) + "\n")
 
     # configures physical device
     def configure(self, settings):
@@ -48,7 +58,7 @@ class MeasurementDevice:
 
     # starts routines necessary for measuring data
     def start_reading(self):
-        pass
+        self.df.to_csv(self.save_path, encoding="utf-8", index=False)
 
     # stops routines necessary for measuring data
     def stop_reading(self):
