@@ -53,8 +53,14 @@ class MPVWrapper:
         return logging_readings
 
     # configures physical device
-    def configure(self, settings):
-        pass
+    def configure(self, bridge_channel: int, channel_on: bool,
+                  current_limit: float, power_limit: float, voltage_limit: float):
+        self.lock.acquire()
+        try:
+            self.client.resistivity.bridge_setup(bridge_channel, channel_on, current_limit, power_limit, voltage_limit)
+        except:
+            print("couldn't configure bridge channel")
+        self.lock.release()
 
     # establishes connection to the physical device
     def connect(self):
@@ -135,6 +141,14 @@ class MPVWrapper:
         except Exception:
             print("couldn't set ramprate")
             print(traceback.format_exc())
+        self.lock.release()
+
+    def set_current(self, bridge_channel: int, current: float):
+        self.lock.acquire()
+        try:
+            self.client.resistivity.set_current(bridge_channel, current)
+        except:
+            print("couldn't set current")
         self.lock.release()
 
     @staticmethod

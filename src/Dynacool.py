@@ -34,8 +34,9 @@ class Dynacool:
         return logging_readings
 
     # configures physical device
-    def configure(self, settings):
-        pass
+    def configure(self, bridge_channel: int, channel_on: bool,
+                  current_limit: float, power_limit: float, voltage_limit: float):
+        self.mpv.configure(bridge_channel, channel_on, current_limit, power_limit, voltage_limit)
 
     # establishes connection to the physical device
     def connect(self):
@@ -207,7 +208,7 @@ class DynacoolCard(DeviceCard):
             self.tabs.show()
             # self.reconnect_btn.show()
 
-            # TODO: apply read settings
+            # TODO: apply read settings (there doesnt seem to be a way for now)
             for form in self.channel_forms:
                 pass
 
@@ -258,7 +259,13 @@ class DynacoolCard(DeviceCard):
 
             self.gui_setup.update_slots()
             self.gui_setup.save_setup_settings()
-            dlg.close()
+            # dlg.close()
+
+            if self.dynacool is not None and self.dynacool.connected:
+                for ch in BridgeChannel:
+                    settings = self.channel_settings[ch]
+                    self.dynacool.configure(ch, True, settings["current_limit"],
+                                            settings["voltage_limit"], settings["power_limit"])
 
         apply_btn.clicked.connect(apply_changes)
 

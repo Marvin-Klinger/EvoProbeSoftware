@@ -30,10 +30,6 @@ class DynacoolChannel(MeasurementDevice):
     def get_readings(self):
         return self.dynacool.get_readings(self.bridge_channel)
 
-    # configures physical device
-    def configure(self, settings):
-        pass
-
     # establishes connection to the physical device
     def connect(self):
         self.dynacool.connect()
