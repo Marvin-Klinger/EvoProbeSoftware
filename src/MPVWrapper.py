@@ -58,6 +58,9 @@ class MPVWrapper:
 
     # establishes connection to the physical device
     def connect(self):
+        if self.connected:
+            return
+
         print("try connecting")
         self.lock.acquire(blocking=True)
         try:
@@ -72,6 +75,11 @@ class MPVWrapper:
             return
         self.connected = True
         self.lock.release()
+
+    # connects to the devices asynchronously to not freeze the GUI
+    def connect_async(self):
+        t = threading.Thread(target=self.connect, daemon=True)
+        t.start()
 
     def get_temperature(self):
         if not self.connected:
@@ -133,6 +141,7 @@ class MPVWrapper:
     def get_device():
         if MPVWrapper.device is None:
             MPVWrapper.device = MPVWrapper()
+            MPVWrapper.device.connect_async()
         return MPVWrapper.device
 
 

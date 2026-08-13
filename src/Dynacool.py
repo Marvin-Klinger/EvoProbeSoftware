@@ -9,31 +9,27 @@ from PyQt5 import QtGui as qtg
 import MultiPyVu as mpv
 import DefaultSettings as ds
 from enum import IntEnum
-from MPVWrapper import BridgeChannel, CalibrationMode, DriveMode
+from MPVWrapper import BridgeChannel, CalibrationMode, DriveMode, MPVWrapper
 
 from src.GuiThread import GuiThread
 
 
-class Dynacool(MeasurementDevice):
+class Dynacool:
     LOGGING_KEYS = ["current", "resistance"]
 
-    def __init__(self, data=None):
-        if data is None:
-            data = {}
-        super().__init__(data)
-        pass
+    def __init__(self):
+        self.mpv = MPVWrapper.get_device()
+        self.connected = False
 
     # gets raw readings from device and applies calibration if necessary
-    def get_readings(self):
-        # TODO: proper implementation
-        return {BridgeChannel(i): {"current": random.uniform(0.1, 10),
-                                   "resistance": random.uniform(0.1, 20)} for i in range(1, 5)}
+    def get_readings(self, channel: BridgeChannel):
+        return self.mpv.get_channel_reading(channel)
 
     # converts readings to data usable by DataHub
-    def get_logging_readings(self):
-        readings = self.get_readings()
+    def get_logging_readings(self, channel: BridgeChannel):
+        readings = self.get_readings(channel)
         logging_readings = []
-        for key in self.keys:
+        for key in self.LOGGING_KEYS:
             logging_readings.append(readings[key])
         return logging_readings
 
@@ -43,9 +39,13 @@ class Dynacool(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        # TODO: proper implementation
-        time.sleep(1)
-        self.connected = True
+        self.mpv.connect()
+        self.connected = self.mpv.connected
+
+    # connects to the devices asynchronously to not freeze the GUI
+    def connect_async(self):
+        t = Thread(target=self.connect, daemon=True)
+        t.start()
 
     # starts routines necessary for measuring data
     def start_reading(self):

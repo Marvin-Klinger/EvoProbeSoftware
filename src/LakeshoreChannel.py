@@ -12,8 +12,6 @@ class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
 
-    Lakeshore_Devices = []
-
     def __init__(self, data):
         super().__init__(data)
 

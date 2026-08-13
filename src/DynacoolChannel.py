@@ -7,13 +7,16 @@ from PyQt5.QtCore import Qt
 import DefaultSettings as ds
 from ExtraClasses import MeasurementDeviceType as mdType
 from src.MeasurementDevice import MeasurementDevice
+from Dynacool import Dynacool
 
 
 class DynacoolChannel(MeasurementDevice):
+    LOGGING_KEYS = ["current", "resistance"]
 
     def __init__(self, data):
         super().__init__(data)
         self.bridge_channel = data["channel"]
+        self.dynacool = Dynacool.get_device(data.get("id", 0))
 
         self.last_values = {}
         self.info = None
@@ -25,15 +28,7 @@ class DynacoolChannel(MeasurementDevice):
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
-        return {}
-
-    # converts readings to data usable by DataHub
-    def get_logging_readings(self):
-        readings = self.get_readings()
-        logging_readings = []
-        for key in self.keys:
-            logging_readings.append(readings[key])
-        return logging_readings
+        return self.dynacool.get_readings(self.bridge_channel)
 
     # configures physical device
     def configure(self, settings):
@@ -41,12 +36,8 @@ class DynacoolChannel(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        pass
-
-    # connects to the devices asynchronously to not freeze the GUI
-    def connect_async(self):
-        t = Thread(target=self.connect, daemon=True)
-        t.start()
+        self.dynacool.connect()
+        self.connected = self.dynacool.connected
 
     # starts routines necessary for measuring data
     def start_reading(self):
