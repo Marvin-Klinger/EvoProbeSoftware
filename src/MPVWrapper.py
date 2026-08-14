@@ -18,7 +18,7 @@ import DefaultSettings as ds
 
 
 class MPVWrapper:
-    device = None
+    Device = None
 
     def __init__(self):
         self.server = None
@@ -79,6 +79,7 @@ class MPVWrapper:
             print("connection to mpv not possible")
             self.lock.release()
             return
+        print("connection successful")
         self.connected = True
         self.lock.release()
 
@@ -125,7 +126,8 @@ class MPVWrapper:
             value["current"] = self.client.resistivity.get_current(bridge_channel)
             value["resistance"] = self.client.resistivity.get_resistance(bridge_channel)
         except:
-            print("couldn't read bridge channel")
+            # print("couldn't read bridge channel")
+            pass
         self.lock.release()
         return value
 
@@ -153,10 +155,10 @@ class MPVWrapper:
 
     @staticmethod
     def get_device():
-        if MPVWrapper.device is None:
-            MPVWrapper.device = MPVWrapper()
-            MPVWrapper.device.connect_async()
-        return MPVWrapper.device
+        if MPVWrapper.Device is None:
+            MPVWrapper.Device = MPVWrapper()
+            # MPVWrapper.Device.connect_async()
+        return MPVWrapper.Device
 
 
 class CalibrationMode(IntEnum):

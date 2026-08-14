@@ -8,6 +8,8 @@ from src.ExtraClasses import MeasurementDeviceType as mdType
 from LakeshoreDevice import LakeshoreDevice, Model372
 from LakeshoreChannel import LakeshoreChannel
 from MPVWrapper import MPVWrapper
+from PPMS6000Channel import PPMS6000Channel
+from DynacoolChannel import DynacoolChannel
 
 from PyQt5 import QtWidgets as qtw
 
@@ -38,6 +40,12 @@ class Controller:
                 case mdType.MPV:
                     mpv = MPVWrapper(slot)
                     devices.append(mpv)
+                case mdType.DYNACOOL:
+                    dynacool = DynacoolChannel(slot)
+                    devices.append(dynacool)
+                case mdType.PPMS6000:
+                    ppms = PPMS6000Channel(slot)
+                    devices.append(ppms)
                 case _:
                     pass
         self.devices = devices

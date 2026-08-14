@@ -140,7 +140,7 @@ class LiveGraph(Process):
         self.timer += temp - self.timestamp
         if self.timer > 1:
             self.timer = 0
-            print(f"time: {temp - self.timestamp}\nfps: {(temp - self.timestamp) ** -1}")
+            # print(f"time: {temp - self.timestamp}\nfps: {(temp - self.timestamp) ** -1}")
         self.timestamp = temp
 
 

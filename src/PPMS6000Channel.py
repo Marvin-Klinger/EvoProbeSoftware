@@ -6,6 +6,7 @@ from PyQt5.QtCore import Qt
 
 import DefaultSettings as ds
 from ExtraClasses import MeasurementDeviceType as mdType
+from ExtraClasses import DeviceInfo
 from src.MeasurementDevice import MeasurementDevice
 
 
@@ -16,7 +17,7 @@ class PPMS6000Channel(MeasurementDevice):
         self.bridge_channel = data["channel"]
 
         self.last_values = {}
-        self.info = None
+        self.info = DeviceInfo(name=f"{data.get('name', 'PPMS')} Ch_{self.bridge_channel}", version=0)
         self.calibration = None
         self.keys = ["current", "resistance"]
         self.logging_keys = [f"{key[:3]}_{self.bridge_channel}" for key in self.keys]
@@ -25,15 +26,7 @@ class PPMS6000Channel(MeasurementDevice):
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
-        return {}
-
-    # converts readings to data usable by DataHub
-    def get_logging_readings(self):
-        readings = self.get_readings()
-        logging_readings = []
-        for key in self.keys:
-            logging_readings.append(readings[key])
-        return logging_readings
+        return {key: 0 for key in self.keys}
 
     # configures physical device
     def configure(self, settings):

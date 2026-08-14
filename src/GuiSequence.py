@@ -95,6 +95,7 @@ class PreviewCard:
 
         self.reading_displays = {}
         is_connected = self.device.connected
+        print(is_connected)
         status = qtw.QLabel("● connected" if is_connected else "● offline")
         status.setStyleSheet(f"color: {'green' if is_connected else 'red'}")
         status.setFont(ds.FONT)
@@ -121,6 +122,7 @@ class PreviewCard:
                     status.setStyleSheet(f"color: red")
 
                 readings = self.device.get_logging_readings()
+                print(readings)
                 for i, key in enumerate(self.device.logging_keys):
                     self.reading_displays[key].setText(f"{readings[i]:.1f}")
             except RuntimeError:

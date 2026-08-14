@@ -17,6 +17,8 @@ from src.GuiThread import GuiThread
 class Dynacool:
     LOGGING_KEYS = ["current", "resistance"]
 
+    Devices = {}
+
     def __init__(self):
         self.mpv = MPVWrapper.get_device()
         self.connected = False
@@ -55,6 +57,13 @@ class Dynacool:
     # stops routines necessary for measuring data
     def stop_reading(self):
         pass
+
+    @staticmethod
+    def get_device(id: int):
+        if id not in Dynacool.Devices:
+            Dynacool.Devices[id] = Dynacool()
+
+        return Dynacool.Devices[id]
 
     @staticmethod
     def get_card(gui_setup, data=None):

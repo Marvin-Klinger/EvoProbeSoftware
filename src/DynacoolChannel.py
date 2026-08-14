@@ -6,6 +6,8 @@ from PyQt5.QtCore import Qt
 
 import DefaultSettings as ds
 from ExtraClasses import MeasurementDeviceType as mdType
+from ExtraClasses import DeviceInfo
+from src.MPVWrapper import BridgeChannel
 from src.MeasurementDevice import MeasurementDevice
 from Dynacool import Dynacool
 
@@ -15,11 +17,11 @@ class DynacoolChannel(MeasurementDevice):
 
     def __init__(self, data):
         super().__init__(data)
-        self.bridge_channel = data["channel"]
+        self.bridge_channel = BridgeChannel(data.get("channel", 1))
         self.dynacool = Dynacool.get_device(data.get("id", 0))
 
         self.last_values = {}
-        self.info = None
+        self.info = DeviceInfo(name=f"{data.get('name', 'DC')} Ch_{self.bridge_channel}", version=0)
         self.calibration = None
         self.keys = ["current", "resistance"]
         self.logging_keys = [f"{key[:3]}_{self.bridge_channel}" for key in self.keys]

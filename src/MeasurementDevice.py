@@ -58,7 +58,8 @@ class MeasurementDevice:
 
     # starts routines necessary for measuring data
     def start_reading(self):
-        self.df.to_csv(self.save_path, encoding="utf-8", index=False)
+        # self.df.to_csv(self.save_path, encoding="utf-8", index=False)
+        pass
 
     # stops routines necessary for measuring data
     def stop_reading(self):
