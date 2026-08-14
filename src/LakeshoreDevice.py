@@ -43,9 +43,11 @@ class LakeshoreDevice:
         self.info = None
 
     def add_channel(self, channel: Model372.InputChannel):
+        self.lock.acquire()
         self.input_channels.append(channel)
         if channel != Model372.InputChannel.CONTROL:
             self.scanner_queue.append(channel)
+        self.lock.release()
 
     # starts changing scanner position every scanner_interval
     def start_scanner_cycle(self):
@@ -89,11 +91,18 @@ class LakeshoreDevice:
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self, input_channel: Model372.InputChannel):
+        self.lock.acquire()
+        readings = {k: np.nan for k in ["kelvin", "resistance", "power", "quadrature"]}
         if (not self.connected or (self.current_channel != input_channel or not self.is_ready) and
                 input_channel != Model372.InputChannel.CONTROL):
-            return {k: np.nan for k in ["kelvin", "resistance", "power", "quadrature"]}
-        else:
-            return self.lakeshore.get_all_input_readings(input_channel.value)
+            self.lock.release()
+            return readings
+        try:
+            readings = self.lakeshore.get_all_input_readings(input_channel.value)
+        except:
+            print("couldn't read lakeshore ch ", input_channel)
+        self.lock.release()
+        return readings
 
     # sets scanner to next channel in scanner_queue
     def set_next_scanner_position(self):
@@ -111,7 +120,7 @@ class LakeshoreDevice:
 
             def wait_for_ready():
                 # TODO: find actual settle time
-                time.sleep(1)
+                time.sleep(3)
                 self.is_ready = True
 
             t = Thread(target=wait_for_ready, daemon=True)
@@ -232,7 +241,7 @@ class LakeshoreCard(DeviceCard):
 
         self.channel_forms = []
         # TODO: make this into instance id and sync with thread
-        self.edit_window_is_open = False
+        self.edit_window_instance = 0
 
         if self.use_usb == self.use_ip:
             self.use_usb = True
@@ -277,7 +286,7 @@ class LakeshoreCard(DeviceCard):
         dlg.setFont(ds.FONT)
         layout = qtw.QVBoxLayout()
         dlg.setLayout(layout)
-        self.edit_window_is_open = True
+        self.edit_window_instance += 1
 
         # Settings
         form_holder = qtw.QWidget()
@@ -492,19 +501,21 @@ class LakeshoreCard(DeviceCard):
                     form["resistance_range"].setCurrentIndex(settings.resistance_range.value - 1)
                 form["excitation_range"].setCurrentIndex(settings.excitation_range.value - 1)
                 form["auto_range"].setChecked(settings.auto_range.value)
-                state, settle_time, window = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
-                form["use_filter"].setChecked(state)
-                form["settle_time"].setValue(settle_time)
-                form["window"].setValue(window)
+                filter_settings = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
+                form["use_filter"].setChecked(filter_settings["state"])
+                form["settle_time"].setValue(filter_settings["settle_time"])
+                form["window"].setValue(filter_settings["window"])
 
             def update_readings():
-                while self.edit_window_is_open:
+                current_instance = self.edit_window_instance
+                while self.edit_window_instance == current_instance:
                     for ch in range(len(self.channel_forms)):
                         reading = self.lakeshore.get_readings(Model372.InputChannel("A" if ch == 0 else ch))
                         formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in reading.items()]) + "]"
                         try:
                             self.channel_forms[ch]["readings"].setText(formatted)
                         except RuntimeError:
+                            print("runtime err in edit window")
                             return
                     time.sleep(1)
 
@@ -555,17 +566,19 @@ class LakeshoreCard(DeviceCard):
                     if ch == 0:
                         settings = Model372InputSetupSettings(mode=Model372.SensorExcitationMode.CURRENT,
                                                               excitation_range=form["excitation_range"].currentData(),
-                                                              auto_range=form["auto_range"].isChecked(),
+                                                              auto_range=Model372.AutoRangeMode(form["auto_range"].isChecked()),
                                                               current_source_shunted=False,
                                                               units=Model372.InputSensorUnits.OHMS)
                         self.lakeshore.configure(Model372.InputChannel("A"), settings)
                     else:
                         settings = Model372InputSetupSettings(mode=form["excitation_mode"].currentData(),
                                                               excitation_range=form["excitation_range"].currentData(),
-                                                              auto_range=form["auto_range"].isChecked(),
+                                                              auto_range=Model372.AutoRangeMode(form["auto_range"].isChecked()),
                                                               current_source_shunted=False,
                                                               units=Model372.InputSensorUnits.OHMS,
                                                               resistance_range=form["resistance_range"].currentData())
+                        print(settings)
+                        print(vars(settings))
                         self.lakeshore.configure(Model372.InputChannel(ch), settings)
 
                     self.lakeshore.set_filter(input_channel=Model372.InputChannel("A" if ch == 0 else ch),

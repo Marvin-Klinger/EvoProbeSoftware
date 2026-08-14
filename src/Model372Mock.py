@@ -47,6 +47,7 @@ class Model372Mock(Model372):
         print("setting filter: ", input_channel, state, settle_time, window)
         pass
 
+    # TODO: make dictionary
     def get_filter(self, input_channel):
         if input_channel == "A":
             return False, 10, 10

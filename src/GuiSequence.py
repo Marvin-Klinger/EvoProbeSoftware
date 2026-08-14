@@ -74,6 +74,7 @@ class GuiSequence(qtw.QWidget):
         for device in self.devices:
             print("previewing device: ", device)
             card = PreviewCard(device, devices_layout)
+        print("done")
 
         self.layout().addStretch()
 
@@ -125,7 +126,9 @@ class PreviewCard:
                 print(readings)
                 for i, key in enumerate(self.device.logging_keys):
                     self.reading_displays[key].setText(f"{readings[i]:.1f}")
+                print("updated preview")
             except RuntimeError:
+                print("runtime err")
                 self.is_active = False
                 return
 
