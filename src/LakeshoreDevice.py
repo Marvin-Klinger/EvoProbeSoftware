@@ -7,7 +7,7 @@ from MeasurementDevice import DeviceCard
 from ExtraClasses import MeasurementDeviceType as mdType
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt, QThreadPool, QThread
+from PyQt5.QtCore import Qt, QThreadPool, QThread, QTimer
 import DefaultSettings as ds
 from GuiHelper import range_text_converter
 
@@ -240,8 +240,6 @@ class LakeshoreCard(DeviceCard):
         self.ip = data.get("ip", "192.168.0.12")
 
         self.channel_forms = []
-        # TODO: make this into instance id and sync with thread
-        self.edit_window_instance = 0
 
         if self.use_usb == self.use_ip:
             self.use_usb = True
@@ -252,6 +250,7 @@ class LakeshoreCard(DeviceCard):
         self.reconnect_btn = None
         self.tabs = None
         self.lakeshore = None
+        self.reading_timer = None
 
     def get_device_data(self, extra=None):
         data = {"id": self.id, "type": self.type, "name": self.name,
@@ -286,7 +285,6 @@ class LakeshoreCard(DeviceCard):
         dlg.setFont(ds.FONT)
         layout = qtw.QVBoxLayout()
         dlg.setLayout(layout)
-        self.edit_window_instance += 1
 
         # Settings
         form_holder = qtw.QWidget()
@@ -478,6 +476,7 @@ class LakeshoreCard(DeviceCard):
             self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
 
         def update_display():
+            print("updating display")
             if not self.lakeshore.connected:
                 self.connection_status.setText("● Not Connected")
                 self.connection_status.setStyleSheet("color: red")
@@ -506,21 +505,21 @@ class LakeshoreCard(DeviceCard):
                 form["settle_time"].setValue(filter_settings["settle_time"])
                 form["window"].setValue(filter_settings["window"])
 
-            def update_readings():
-                current_instance = self.edit_window_instance
-                while self.edit_window_instance == current_instance:
-                    for ch in range(len(self.channel_forms)):
-                        reading = self.lakeshore.get_readings(Model372.InputChannel("A" if ch == 0 else ch))
-                        formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in reading.items()]) + "]"
-                        try:
-                            self.channel_forms[ch]["readings"].setText(formatted)
-                        except RuntimeError:
-                            print("runtime err in edit window")
-                            return
-                    time.sleep(1)
+            self.reading_timer = QTimer()
 
-            t = Thread(daemon=True, target=update_readings)
-            t.start()
+            def update_readings():
+                for ch in range(len(self.channel_forms)):
+                    reading = self.lakeshore.get_readings(Model372.InputChannel("A" if ch == 0 else ch))
+                    formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in reading.items()]) + "]"
+                    try:
+                        self.channel_forms[ch]["readings"].setText(formatted)
+                    except RuntimeError:
+                        print("runtime err in edit window")
+                        self.timer.stop()
+                        return
+
+            self.reading_timer.timeout.connect(update_readings)
+            self.reading_timer.start(1000)
 
         t = GuiThread(target=connect_lakeshore)
         t.start()
@@ -587,5 +586,12 @@ class LakeshoreCard(DeviceCard):
                                               window=form["window"].value())
 
         apply_btn.clicked.connect(apply_changes)
+
+        def close_edit_window():
+            self.timer.stop()
+            dlg.close()
+
+        quit = qtw.QAction("Quit", dlg)
+        quit.triggered.connect(close_edit_window)
 
         dlg.exec()

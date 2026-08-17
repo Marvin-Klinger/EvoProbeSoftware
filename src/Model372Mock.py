@@ -16,7 +16,7 @@ class Model372Mock(Model372):
         try:
             super().__init__(baud_rate, **kwargs)
         except:
-            time.sleep(1)
+            time.sleep(2)
             print("DEBUG MODE IS ACTIVE")
 
     def get_all_input_readings(self, input_channel):
@@ -47,12 +47,11 @@ class Model372Mock(Model372):
         print("setting filter: ", input_channel, state, settle_time, window)
         pass
 
-    # TODO: make dictionary
     def get_filter(self, input_channel):
         if input_channel == "A":
-            return False, 10, 10
+            return {"state": False, "settle_time": 10, "window": 10}
         else:
-            return True, 16, 8
+            return {"state": True, "settle_time": 16, "window": 8}
 
     def set_excitation_frequency(self, input_channel, frequency):
         print("setting frequency of ", input_channel, " to ", frequency)
