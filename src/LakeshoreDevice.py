@@ -25,7 +25,7 @@ class LakeshoreDevice:
 
     Devices = {}
 
-    def __init__(self, scanner_interval=5, baud_rate=BAUD_RATE, ip_address=IP_ADDRESS):
+    def __init__(self, scanner_interval=10, baud_rate=BAUD_RATE, ip_address=IP_ADDRESS):
 
         self.lakeshore: Model372 = None
         self.input_channels = []
@@ -515,7 +515,7 @@ class LakeshoreCard(DeviceCard):
                         self.channel_forms[ch]["readings"].setText(formatted)
                     except RuntimeError:
                         print("runtime err in edit window")
-                        self.timer.stop()
+                        self.reading_timer.stop()
                         return
 
             self.reading_timer.timeout.connect(update_readings)
@@ -587,11 +587,5 @@ class LakeshoreCard(DeviceCard):
 
         apply_btn.clicked.connect(apply_changes)
 
-        def close_edit_window():
-            self.timer.stop()
-            dlg.close()
-
-        quit = qtw.QAction("Quit", dlg)
-        quit.triggered.connect(close_edit_window)
-
         dlg.exec()
+        self.reading_timer.stop()

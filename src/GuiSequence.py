@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 
 from src.MeasurementDevice import MeasurementDevice
 import time
@@ -84,7 +84,7 @@ class PreviewCard:
     def __init__(self, device: MeasurementDevice, parent_layout: qtw.QHBoxLayout):
         self.device = device
         self.parent_layout = parent_layout
-        self.is_active = True
+        self.timer = None
 
         device_holder = qtw.QWidget()
         device_layout = qtw.QFormLayout()
@@ -95,10 +95,8 @@ class PreviewCard:
         device_layout.addRow(device_name)
 
         self.reading_displays = {}
-        is_connected = self.device.connected
-        print(is_connected)
-        status = qtw.QLabel("● connected" if is_connected else "● offline")
-        status.setStyleSheet(f"color: {'green' if is_connected else 'red'}")
+        status = qtw.QLabel("● loading")
+        status.setStyleSheet(f"color: orange")
         status.setFont(ds.FONT)
         self.reading_displays["status"] = status
         device_layout.addRow(status)
@@ -108,28 +106,24 @@ class PreviewCard:
             self.reading_displays[key] = display
             device_layout.addRow(f"{key}: ", display)
 
-        t = Thread(daemon=True, target=self.update)
-        t.start()
+        self.timer = QTimer(device_holder)
+        self.timer.timeout.connect(lambda: self.update())
+        self.timer.start(2000)
 
     def update(self):
-        while self.is_active:
-            try:
-                status = self.reading_displays["status"]
-                if self.device.connected:
-                    status.setText("● connected")
-                    status.setStyleSheet(f"color: green")
-                else:
-                    status.setText("● offline")
-                    status.setStyleSheet(f"color: red")
+        try:
+            status = self.reading_displays["status"]
+            if self.device.connected:
+                status.setText("● connected")
+                status.setStyleSheet(f"color: green")
+            else:
+                status.setText("● offline")
+                status.setStyleSheet(f"color: red")
 
-                readings = self.device.get_logging_readings()
-                print(readings)
-                for i, key in enumerate(self.device.logging_keys):
-                    self.reading_displays[key].setText(f"{readings[i]:.1f}")
-                print("updated preview")
-            except RuntimeError:
-                print("runtime err")
-                self.is_active = False
-                return
-
-            time.sleep(3)
+            readings = self.device.get_logging_readings()
+            for i, key in enumerate(self.device.logging_keys):
+                self.reading_displays[key].setText(f"{readings[i]:.1f}")
+        except RuntimeError:
+            print("runtime err")
+            self.timer.stop()
+            return
