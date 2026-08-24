@@ -1,3 +1,5 @@
+import time
+from datetime import datetime
 from enum import Enum
 from threading import Thread
 import os
@@ -12,19 +14,24 @@ from ExtraClasses import MeasurementDeviceType as mdType
 
 class MeasurementDevice:
 
-    # LOGGING_KEYS =
-
     def __init__(self, data):
-        self.last_values = {}
         self.info = None
         self.calibration = None
         self.keys = []
-        self.logging_keys = []
-        self.plotting_keys = []
+        self.logging_keys = [key[:3] for key in self.keys]
+        self.plotting_keys = self.logging_keys.copy()
         self.connected = False
         self.name = data.get("name", "no_name")
+
+        self.is_logging = False
         self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
         self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", str(self.name) + ".csv"))
+        self.intervall = 2
+        self.master_intervall = 2
+        self.next_master_update = 0
+        self.last_reading = {}
+        self.start_time = None
+        self.datahub = None
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -38,7 +45,7 @@ class MeasurementDevice:
             logging_readings.append(readings[key])
         return logging_readings
 
-    def log_reading(self, readings):
+    def log_readings(self, readings):
         self.df.loc[len(self.df)] = readings
         with open(self.save_path, "a") as file:
             file.write(",".join([str(i) for i in readings]) + "\n")
@@ -58,12 +65,34 @@ class MeasurementDevice:
 
     # starts routines necessary for measuring data
     def start_reading(self):
-        # self.df.to_csv(self.save_path, encoding="utf-8", index=False)
         pass
 
     # stops routines necessary for measuring data
     def stop_reading(self):
         pass
+
+    # starts the logging and writing process
+    def start_logging(self, datahub):
+        self.datahub = datahub
+        self.start_time = datahub.start_time
+        self.master_intervall = datahub.intervall
+        self.save_path = os.path.join(os.path.dirname(datahub.save_path), "raw", str(self.name) + ".csv")
+        self.df.to_csv(self.save_path, encoding="utf-8", index=False)
+        self.is_logging = True
+
+        def run(device):
+            while device.is_logging:
+                readings = device.get_logging_readings()
+                time_data = [datetime.now(), time.monotonic() - device.start_time]
+                device.log_readings(time_data + readings)
+                time.sleep(device.intervall)
+
+        t = Thread(daemon=True, target=(lambda: run(self)))
+        t.start()
+
+    # stops the logging and writing process
+    def stop_logging(self):
+        self.is_logging = False
 
     @staticmethod
     def get_card(gui_setup, data=None):

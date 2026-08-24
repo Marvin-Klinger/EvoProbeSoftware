@@ -1,3 +1,5 @@
+import time
+
 from DataReader import DataReader
 from LiveGraph import LiveGraph, QueueItemType, Operations
 from MeasurementDevice import MeasurementDevice
@@ -11,6 +13,8 @@ class DataHub:
         self.measurement_devices = measurement_devices
         self.save_path = save_path
         self.controller = controller
+        self.intervall = 2
+        self.start_time = None
 
         columns = ["timestamp", "timedelta"]
         for device in self.measurement_devices:
@@ -33,6 +37,7 @@ class DataHub:
 
     # starts the logging process and graph
     def start_logging(self):
+        self.start_time = time.monotonic()
         self.reader.start()
         self.graph.start()
 
