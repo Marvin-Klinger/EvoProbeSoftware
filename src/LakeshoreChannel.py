@@ -1,7 +1,8 @@
 import time
-
 import numpy as np
 from lakeshore import Model372, Model372InputSetupSettings
+import pandas as pd
+import os
 
 from src.LakeshoreDevice import LakeshoreDevice
 from src.MeasurementDevice import MeasurementDevice
@@ -23,8 +24,13 @@ class LakeshoreChannel(MeasurementDevice):
                      (["quadrature"] if self.input_channel != Model372.InputChannel.CONTROL else []))
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
-        self.info = DeviceInfo(name=f"Channel {self.input_channel.name}", version=0)
+        self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
+        self.name += f"_Ch{self.input_channel.value}"
 
+        self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
+        self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "raw",
+                                                      f"{self.name}_Ch{self.input_channel.value}.csv"))
+        self.intervall = 2
         self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary

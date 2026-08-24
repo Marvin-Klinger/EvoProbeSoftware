@@ -5,6 +5,7 @@ from LiveGraph import LiveGraph, QueueItemType, Operations
 from MeasurementDevice import MeasurementDevice
 import pandas as pd
 from multiprocessing import Process, Queue
+import os
 
 
 class DataHub:
@@ -21,6 +22,9 @@ class DataHub:
             columns += device.logging_keys
         self.df = pd.DataFrame(columns=columns)
         self.df.to_csv(self.save_path, encoding="utf-8", index=False)
+        raw_path = os.path.join(os.path.dirname(self.save_path), "raw")
+        if not os.path.exists(raw_path):
+            os.mkdir(raw_path)
 
         self.reader = DataReader(datahub=self,
                                  measurement_devices=self.measurement_devices,
@@ -40,6 +44,8 @@ class DataHub:
         self.start_time = time.monotonic()
         self.reader.start()
         self.graph.start()
+        for device in self.measurement_devices:
+            device.start_logging(self)
 
     # adds new row to df and propagate to other classes (graph)
     def update_df(self, data):
