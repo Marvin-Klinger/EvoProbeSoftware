@@ -37,8 +37,10 @@ class DataHub:
             count += 1
         self.save_path = self. save_path + "_" + str(count)
         os.mkdir(self.save_path)
-        master_df = pd.DataFrame(columns=["timestamp", "timedelta"] +
-                                         [f"{i+1}_{d.logging_keys}" for i, d in enumerate(self.measurement_devices)])
+        columns = ["timestamp", "timedelta"]
+        for i, d in enumerate(self.measurement_devices):
+            columns += [f"{i+1}_{keys}" for keys in d.logging_keys]
+        master_df = pd.DataFrame(columns=columns)
         self.dfs.append(master_df)
         master_df.to_csv(os.path.join(self.save_path, self.save_path_extensions[0]), encoding="utf-8", index=False)
 
@@ -53,14 +55,15 @@ class DataHub:
     def start_logging(self):
         self.start_time = time.monotonic()
         self.graph.start()
-        for device in self.measurement_devices:
-            device.start_logging(self)
+        for i, device in enumerate(self.measurement_devices):
+            device.start_logging(self, i+1, self.start_time)
 
     # adds new row to df and propagate to other classes (graph)
-    def update_df(self, data):
-        self.graph_queue.put([QueueItemType.DATA, data])
-        self.df.loc[len(self.df)] = data
-        with open(self.save_path, "a") as file:
+    def update_df(self, data, logging_id):
+        # self.graph_queue.put([QueueItemType.DATA, data])
+        df = self.dfs[logging_id]
+        df.loc[len(df)] = data
+        with open(os.path.join(self.save_path, self.save_path_extensions[logging_id]), "a") as file:
             file.write(",".join([str(i) for i in data]) + "\n")
-        print(data)
+        print(logging_id, data)
 

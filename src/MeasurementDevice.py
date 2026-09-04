@@ -24,14 +24,11 @@ class MeasurementDevice:
         self.name = data.get("name", "no_name")
 
         self.is_logging = False
-        self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
-        self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", str(self.name) + ".csv"))
         self.intervall = 2
-        self.master_intervall = 2
-        self.next_master_update = 0
         self.last_reading = {}
-        self.start_time = None
         self.datahub = None
+        self.logging_id = None
+        self.start_time = None
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -46,9 +43,8 @@ class MeasurementDevice:
         return logging_readings
 
     def log_readings(self, readings):
-        self.df.loc[len(self.df)] = readings
-        with open(self.save_path, "a") as file:
-            file.write(",".join([str(i) for i in readings]) + "\n")
+        if self.datahub is not None and self.logging_id is not None:
+            self.datahub.update_df(readings, self.logging_id)
 
     # configures physical device
     def configure(self, settings):
@@ -71,29 +67,30 @@ class MeasurementDevice:
     def stop_reading(self):
         pass
 
+    # overridable method for reading thread
+    @staticmethod
+    def _run(device):
+        while device.is_logging:
+            readings = device.get_logging_readings()
+            time_data = [datetime.now(), time.monotonic() - device.start_time]
+            device.log_readings(time_data + readings)
+            time.sleep(device.intervall)
+
     # starts the logging and writing process
-    def start_logging(self, datahub):
+    def start_logging(self, datahub, logging_id: int, start_time):
         self.datahub = datahub
-        self.start_time = datahub.start_time
-        self.master_intervall = datahub.intervall
-        self.save_path = os.path.join(os.path.dirname(datahub.save_path), "raw", str(self.name) + ".csv")
-        self.df.to_csv(self.save_path, encoding="utf-8", index=False)
+        self.logging_id = logging_id
+        self.start_time = start_time
         self.is_logging = True
 
-        def run(device):
-            while device.is_logging:
-                readings = device.get_logging_readings()
-                time_data = [datetime.now(), time.monotonic() - device.start_time]
-                device.log_readings(time_data + readings)
-                time.sleep(device.intervall)
-
-        t = Thread(daemon=True, target=(lambda: run(self)))
+        t = Thread(daemon=True, target=(lambda: self._run(self)))
         t.start()
 
     # stops the logging and writing process
     def stop_logging(self):
         self.is_logging = False
 
+    # overridable method for getting device specific card
     @staticmethod
     def get_card(gui_setup, data=None):
         print("getting card")
