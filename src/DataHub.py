@@ -1,6 +1,8 @@
 import datetime
 import time
 
+import numpy as np
+
 from DataReader import DataReader
 from LiveGraph import LiveGraph, QueueItemType, Operations
 from MeasurementDevice import MeasurementDevice
@@ -20,10 +22,12 @@ class DataHub:
         self.intervall = 2
 
         self.dfs = []
+        self.logging_progress = [0] * (len(measurement_devices)+1)
+        self.last_readings = [None] * (len(measurement_devices)+1)
         self.initialize_files()
 
         self.graph_queue = Queue()
-        plotting_keys = self.dfs[0].columns[2:]
+        plotting_keys = self.dfs[0].columns[1:]
         self.graph = LiveGraph(queue=self.graph_queue,
                                df=self.dfs[0],
                                x_axis="timedelta",
@@ -37,7 +41,8 @@ class DataHub:
             count += 1
         self.save_path = self. save_path + "_" + str(count)
         os.mkdir(self.save_path)
-        columns = ["timestamp", "timedelta"]
+        # TODO: is timestamp necessary/sensible?
+        columns = ["timedelta"]
         for i, d in enumerate(self.measurement_devices):
             columns += [f"{i+1}_{keys}" for keys in d.logging_keys]
         master_df = pd.DataFrame(columns=columns)
@@ -65,5 +70,30 @@ class DataHub:
         df.loc[len(df)] = data
         with open(os.path.join(self.save_path, self.save_path_extensions[logging_id]), "a") as file:
             file.write(",".join([str(i) for i in data]) + "\n")
-        print(logging_id, data)
 
+        while data[1] >= self.logging_progress[logging_id]*self.intervall:
+            new_reading = []
+            last_reading = self.last_readings[logging_id]
+            if last_reading is None:
+                new_reading = [np.nan] * (len(data)-2)
+            else:
+                t0, t1, t2 = self.logging_progress[logging_id]*self.intervall, last_reading[1], data[1]
+                old_x, new_x = (t2-t0)/(t2-t1), (t0-t1)/(t2-t1)
+                for i in range(2, len(data)):
+                    new_reading.append(last_reading[i]*old_x + data[i]*new_x)
+            master_df = self.dfs[0]
+            columns = [f"{logging_id}_{key}" for key in df.columns[2:]]
+            row = self.logging_progress[logging_id]
+            if row >= len(master_df):
+                master_df.loc[row, "timedelta"] = row * self.intervall
+            master_df.loc[row, columns] = new_reading
+
+            self.logging_progress[logging_id] += 1
+
+            if min(self.logging_progress[1:]) > self.logging_progress[0]:
+                with open(os.path.join(self.save_path, self.save_path_extensions[0]), "a") as file:
+                    file.write(",".join([str(i) for i in master_df.loc[row]]) + "\n")
+                self.logging_progress[0] += 1
+                print(list(master_df.loc[row]))
+
+        self.last_readings[logging_id] = data
