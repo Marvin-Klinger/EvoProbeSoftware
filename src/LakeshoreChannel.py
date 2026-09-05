@@ -1,4 +1,6 @@
 import time
+from datetime import datetime
+
 import numpy as np
 from lakeshore import Model372, Model372InputSetupSettings
 import pandas as pd
@@ -12,6 +14,7 @@ from src.ExtraClasses import DeviceInfo
 class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
+    READER_INTERVALL = 1
 
     def __init__(self, data):
         super().__init__(data)
@@ -30,16 +33,13 @@ class LakeshoreChannel(MeasurementDevice):
         self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
         self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "raw",
                                                       f"{self.name}_Ch{self.input_channel.value}.csv"))
-        self.intervall = 2
+        self.intervall = LakeshoreChannel.READER_INTERVALL
         self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
     # TODO: add calibration
     def get_readings(self):
-        if (self.lakeshore.connected and
-                (self.input_channel == Model372.InputChannel.CONTROL or
-                 self.lakeshore.is_ready and
-                 self.lakeshore.current_channel == self.input_channel)):
+        if self.ready_to_read():
             self.last_reading = self.lakeshore.get_readings(self.input_channel)
             return self.last_reading
         else:
@@ -68,6 +68,21 @@ class LakeshoreChannel(MeasurementDevice):
 
     def stop_reading(self):
         self.lakeshore.stop_scanner_cycle()
+
+    @staticmethod
+    def _run(device):
+        while device.is_logging:
+            if device.ready_to_read():
+                readings = device.get_logging_readings()
+                time_data = [datetime.now(), time.monotonic() - device.start_time]
+                device.log_readings(time_data + readings)
+            time.sleep(device.intervall)
+
+    def ready_to_read(self):
+        return (self.lakeshore.connected and
+                (self.input_channel == Model372.InputChannel.CONTROL or
+                 self.lakeshore.is_ready and
+                 self.lakeshore.current_channel == self.input_channel))
 
 
 if __name__ == "__main__":
