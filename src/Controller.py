@@ -12,6 +12,7 @@ from PPMS6000Channel import PPMS6000Channel
 from DynacoolChannel import DynacoolChannel
 
 from PyQt5 import QtWidgets as qtw
+import threading
 
 
 class Controller:
@@ -55,7 +56,8 @@ class Controller:
             device.connect_async()
 
         for device in self.devices:
-            device.start_reading()
+            t = threading.Thread(target=device.start_reading, daemon=True)
+            t.start()
 
     # starts the data reading and logging process and selected sequence
     def start_sequence(self, save_path):

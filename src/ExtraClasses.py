@@ -16,3 +16,22 @@ class MeasurementDeviceType(IntEnum):
     DYNACOOL = 3
     MPV = 4
 
+
+# allows to loop through different colors
+class ColorFactory:
+    COLORS_RGB = [(57, 106, 177),   # blue
+                  (218, 124, 48),   # orange
+                  (62, 150, 81),    # green
+                  (204, 37, 41),    # red
+                  (83, 81, 84),     # grey
+                  (107, 76, 154),   # purple
+                  (146, 36, 40),    # brown
+                  (148, 139, 61)    # camo
+                  ]
+
+    @staticmethod
+    def make_colorgenerator():
+        while True:
+            for c in ColorFactory.COLORS_RGB:
+                yield c
+

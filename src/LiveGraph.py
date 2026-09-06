@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import time
 import pyqtgraph as pg
+from ExtraClasses import ColorFactory
 
 
 class LiveGraph(pg.PlotWidget):
@@ -28,10 +29,10 @@ class LiveGraph(pg.PlotWidget):
         self.setDownsampling(auto=True)
         self.setClipToView(True)
         # TODO: implement actual color/line variety
-        colors = ["", "orange", "green", "blue", "red"]
+        color_generator = ColorFactory.make_colorgenerator()
         for i in range(1, len(self.columns)):
             for key in self.columns[i]:
-                self.lines[i][key] = self.plot_line([], [], f"{i}-{key}", colors[i])
+                self.lines[i][key] = self.plot_line([], [], f"{i}-{key}", next(color_generator))
 
     def plot_line(self, x, y, name, color):
         pen = pg.mkPen(color=color, width=3)
