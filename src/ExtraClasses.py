@@ -23,10 +23,15 @@ class ColorFactory:
                   (218, 124, 48),   # orange
                   (62, 150, 81),    # green
                   (204, 37, 41),    # red
+                  (255, 222, 33),   # yellow
                   (83, 81, 84),     # grey
                   (107, 76, 154),   # purple
                   (146, 36, 40),    # brown
-                  (148, 139, 61)    # camo
+                  (148, 139, 61),   # camo
+                  (114, 147, 203),  # light blue
+                  (132, 186, 91),   # light green
+                  (255, 141, 161),  # pink
+                  (204, 194, 16),   # sand
                   ]
 
     @staticmethod

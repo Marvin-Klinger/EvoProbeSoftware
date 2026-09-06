@@ -66,26 +66,23 @@ class GuiActive(qtw.QWidget):
         auto_ylim.stateChanged.connect(lambda s, a="y": on_change_auto_lim(s, a))
 
         reading_keys = []
-        plotting_keys = []
         for device in (self.controller.devices if self.controller else []):
             reading_keys += device.logging_keys
-            plotting_keys += device.plotting_keys
-
-        def on_change_graph(state: int, key: str):
-            self.graphs[key] = bool(state)
-            print(self.graphs)
-            print([x for x in reading_keys if self.graphs[x]])
-            if self.graph_queue:
-                self.graph_queue.put([QueueItemType.OPERATION, Operations.CHANGE_DISPLAYED_GRAPHS,
-                                      [x for x in reading_keys if self.graphs[x]]])
 
         for col in reading_keys:
             graph = qtw.QCheckBox(col, tab)
-            visible = col in plotting_keys
-            graph.setChecked(visible)
-            self.graphs[col] = visible
             settings_layout.addWidget(graph)
-            graph.stateChanged.connect(lambda s, k=col: on_change_graph(s, k))
+
+        visibility_holder = qtw.QWidget()
+        visibility_layout = qtw.QHBoxLayout()
+        visibility_holder.setLayout(visibility_layout)
+        settings_layout.addWidget(visibility_holder)
+        show_btn = qtw.QPushButton("Show All")
+        visibility_layout.addWidget(show_btn)
+        show_btn.clicked.connect(self.datahub.graph.show_graphs)
+        hide_btn = qtw.QPushButton("Hide All")
+        visibility_layout.addWidget(hide_btn)
+        hide_btn.clicked.connect(self.datahub.graph.hide_graphs)
 
         settings_layout.addStretch()
 

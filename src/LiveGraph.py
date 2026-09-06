@@ -3,6 +3,7 @@ import pandas as pd
 import random
 import time
 import pyqtgraph as pg
+from itertools import chain
 from ExtraClasses import ColorFactory
 
 
@@ -38,8 +39,12 @@ class LiveGraph(pg.PlotWidget):
         pen = pg.mkPen(color=color, width=3)
         return self.plot(x, y, name=name, pen=pen)
 
-    def execute_operation(self, op, content=None):
-        pass
+    # updates line of id using data from dfs
+    def update_default(self, id):
+        df = self.dfs[id]
+        x = list(df[self.x_axis])
+        for key, line in self.lines[id].items():
+            line.setData(x, list(df[key]))
 
     # sets the x/ylim values of the plot according to the min and max values in df
     def centre_graphs(self):
@@ -48,11 +53,15 @@ class LiveGraph(pg.PlotWidget):
     def change_displayed_graphs(self, graphs):
         pass
 
-    def update_default(self, id):
-        df = self.dfs[id]
-        x = list(df[self.x_axis])
-        for key, line in self.lines[id].items():
-            line.setData(x, list(df[key]))
+    def hide_graphs(self, graphs=False):
+        if not graphs:
+            for line in chain(*[group.values() for group in self.lines]):
+                line.hide()
+
+    def show_graphs(self, graphs=False):
+        if not graphs:
+            for line in chain(*[group.values() for group in self.lines]):
+                line.show()
 
 
 class QueueItemType(Enum):
