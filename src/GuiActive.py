@@ -11,7 +11,7 @@ class GuiActive(qtw.QWidget):
         super().__init__()
         self.main_window = main_window
         self.controller = controller
-        self.graph_queue = self.controller.datahub.graph_queue if controller else None
+        self.datahub = self.controller.datahub if controller else None
         self.graphs = {}
 
         self.setLayout(qtw.QVBoxLayout())
@@ -23,25 +23,33 @@ class GuiActive(qtw.QWidget):
         self.load_sequence_tab()
         self.load_graph_tab()
 
+        self.tabs.setCurrentIndex(1)
+
     def load_sequence_tab(self):
         tab = qtw.QWidget()
         self.tabs.addTab(tab, "Sequence")
 
     def load_graph_tab(self):
         tab = qtw.QWidget()
-        layout = qtw.QVBoxLayout()
+        layout = qtw.QHBoxLayout()
         tab.setLayout(layout)
+
+        # Settings
+        settings_holder = qtw.QWidget()
+        settings_layout = qtw.QVBoxLayout()
+        settings_holder.setLayout(settings_layout)
+        layout.addWidget(settings_holder)
 
         auto_xlim = qtw.QCheckBox("Auto adjust X-Axis")
         auto_xlim.setChecked(True)
-        layout.addWidget(auto_xlim)
+        settings_layout.addWidget(auto_xlim)
 
         auto_ylim = qtw.QCheckBox("Auto adjust Y-Axis")
-        layout.addWidget(auto_ylim)
+        settings_layout.addWidget(auto_ylim)
 
         centre_graph = qtw.QPushButton("Centre Graph")
         centre_graph.clicked.connect(lambda: self.graph_queue.put([QueueItemType.OPERATION, Operations.CENTRE_GRAPHS]))
-        layout.addWidget(centre_graph)
+        settings_layout.addWidget(centre_graph)
 
         def on_change_auto_lim(state: int, axis: str):
             print(f"{axis}-axis is set to {bool(state)}")
@@ -76,7 +84,12 @@ class GuiActive(qtw.QWidget):
             visible = col in plotting_keys
             graph.setChecked(visible)
             self.graphs[col] = visible
-            layout.addWidget(graph)
+            settings_layout.addWidget(graph)
             graph.stateChanged.connect(lambda s, k=col: on_change_graph(s, k))
+
+        settings_layout.addStretch()
+
+        # Graph
+        layout.addWidget(self.datahub.graph)
 
         self.tabs.addTab(tab, "Graph")

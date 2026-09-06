@@ -26,12 +26,7 @@ class DataHub:
         self.last_readings = [None] * (len(measurement_devices)+1)
         self.initialize_files()
 
-        self.graph_queue = Queue()
-        plotting_keys = self.dfs[0].columns[1:]
-        self.graph = LiveGraph(queue=self.graph_queue,
-                               df=self.dfs[0],
-                               x_axis="timedelta",
-                               y_axis=plotting_keys)
+        self.graph = LiveGraph(dfs=self.dfs, x_axis="timedelta")
 
     def initialize_files(self):
         # File Management
@@ -59,7 +54,6 @@ class DataHub:
     # starts the logging process and graph
     def start_logging(self):
         self.start_time = time.monotonic()
-        self.graph.start()
         for i, device in enumerate(self.measurement_devices):
             device.start_logging(self, i+1, self.start_time)
 
@@ -70,6 +64,7 @@ class DataHub:
         df.loc[len(df)] = data
         with open(os.path.join(self.save_path, self.save_path_extensions[logging_id]), "a") as file:
             file.write(",".join([str(i) for i in data]) + "\n")
+        self.graph.update_default(logging_id)
 
         while data[1] >= self.logging_progress[logging_id]*self.intervall:
             new_reading = []
