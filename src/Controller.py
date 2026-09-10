@@ -28,15 +28,17 @@ class Controller:
     # instantiates measurement_devices from data in setup.json
     def instantiate_devices(self):
         devices = []
-        slots = FileHandler.get_setup_json().get("slots", [])
-        for slot in slots:
+        setup_json = FileHandler.get_setup_json()
+        slots = setup_json.get("slots", [])
+        settings = setup_json.get("devices", [])
+        for i, slot in enumerate(slots):
             if slot is None:
                 continue
 
             print(slot)
             match slot.get("type", None):
                 case mdType.LAKESHORE:
-                    lhc = LakeshoreChannel(slot)
+                    lhc = LakeshoreChannel(slot, settings[i] if len(settings) > i else None)
                     devices.append(lhc)
                 case mdType.MPV:
                     mpv = MPVWrapper(slot)

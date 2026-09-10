@@ -14,7 +14,7 @@ from ExtraClasses import MeasurementDeviceType as mdType
 
 class MeasurementDevice:
 
-    def __init__(self, data):
+    def __init__(self, data, settings=None):
         self.info = None
         self.calibration = None
         self.keys = []

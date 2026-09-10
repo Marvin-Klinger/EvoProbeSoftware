@@ -214,6 +214,19 @@ class LakeshoreDevice:
         print("connection successful")
         self.lock.release()
 
+    def disconnect(self):
+        if not self.connected:
+            return
+
+        try:
+            self.lakeshore.disconnect_usb()
+        except:
+            try:
+                self.lakeshore.disconnect_tcp()
+            except:
+                pass
+        self.connected = False
+
     @staticmethod
     def get_card(gui_setup, data=None):
         print("getting card")
@@ -399,7 +412,7 @@ class LakeshoreCard(DeviceCard):
                 form_layout.addRow("Excitation Frequency ", excitation_frequency)
 
             excitation_range = qtw.QComboBox()
-            for x in (Model372.MeasurementInputCurrentRange if ch != 0 else Model372.ControlInputCurrentRange):
+            for x in (Model372.MeasurementInputVoltageRange if ch != 0 else Model372.ControlInputCurrentRange):
                 excitation_range.addItem(range_text_converter(x.name), x)
             form_layout.addRow("Excitation Range ", excitation_range)
             channel_form["excitation_range"] = excitation_range
@@ -471,8 +484,9 @@ class LakeshoreCard(DeviceCard):
         self.tabs.currentChanged.connect(tab_changed)
 
         def connect_lakeshore():
-            self.lakeshore = LakeshoreDevice(baud_rate=int(baud_rate.text()) if baud_rate.text().isdigit() else 0,
-                                             ip_address=ip_address.text())
+            self.lakeshore = LakeshoreDevice.get_device(self.id)
+            self.lakeshore.baud_rate = int(baud_rate.text()) if baud_rate.text().isdigit() else 0
+            self.lakeshore.ip_address = ip_address.text()
             self.lakeshore.connect(use_usb.isChecked(), use_ip.isChecked())
 
         def update_display():
@@ -565,19 +579,19 @@ class LakeshoreCard(DeviceCard):
                     if ch == 0:
                         settings = Model372InputSetupSettings(mode=Model372.SensorExcitationMode.CURRENT,
                                                               excitation_range=form["excitation_range"].currentData(),
-                                                              auto_range=Model372.AutoRangeMode(form["auto_range"].isChecked()),
+                                                              auto_range=Model372.AutoRangeMode(
+                                                                  form["auto_range"].isChecked()),
                                                               current_source_shunted=False,
                                                               units=Model372.InputSensorUnits.OHMS)
                         self.lakeshore.configure(Model372.InputChannel("A"), settings)
                     else:
                         settings = Model372InputSetupSettings(mode=form["excitation_mode"].currentData(),
                                                               excitation_range=form["excitation_range"].currentData(),
-                                                              auto_range=Model372.AutoRangeMode(form["auto_range"].isChecked()),
+                                                              auto_range=Model372.AutoRangeMode(
+                                                                  form["auto_range"].isChecked()),
                                                               current_source_shunted=False,
                                                               units=Model372.InputSensorUnits.OHMS,
                                                               resistance_range=form["resistance_range"].currentData())
-                        print(settings)
-                        print(vars(settings))
                         self.lakeshore.configure(Model372.InputChannel(ch), settings)
 
                     self.lakeshore.set_filter(input_channel=Model372.InputChannel("A" if ch == 0 else ch),

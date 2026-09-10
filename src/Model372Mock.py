@@ -6,28 +6,30 @@ from lakeshore import Model372, Model372InputSetupSettings
 
 class Model372Mock(Model372):
 
-    KELVIN = 2
-    RESISTANCE = 20
-    POWER = 75
-    QUADRATURE = 3
-    SCANNER = 1
+    KELVIN = list(range(1, 6))
+    RESISTANCE = [x*10 for x in range(1, 6)]
+    POWER = [x*25 for x in range(1, 6)]
+    QUADRATURE = [x*.5 for x in range(1, 6)]
+    SCANNER = [x*.2 for x in range(1, 6)]
 
     def __init__(self, baud_rate, **kwargs):
         try:
             super().__init__(baud_rate, **kwargs)
         except:
-            time.sleep(2)
+            time.sleep(.5)
             print("DEBUG MODE IS ACTIVE")
 
     def get_all_input_readings(self, input_channel):
-        Model372Mock.KELVIN += (random.randint(0, 2) - 1) * 0.1
-        Model372Mock.RESISTANCE += random.randint(0, 8) - 4
-        Model372Mock.POWER += random.randint(0, 4) - 2
-        Model372Mock.QUADRATURE += random.randint(0, 2) - 1
-        return {"kelvin": max(0.01, Model372Mock.KELVIN) + Model372Mock.SCANNER,
-                "resistance": max(0.01, Model372Mock.RESISTANCE) + Model372Mock.SCANNER,
-                "power": max(0.01, Model372Mock.POWER) + Model372Mock.SCANNER,
-                "quadrature": max(0.01, Model372Mock.QUADRATURE) + Model372Mock.SCANNER}
+        if input_channel == "A":
+            input_channel = 0
+        Model372Mock.KELVIN[input_channel] += (random.randint(0, 2) - 1) * 0.1
+        Model372Mock.RESISTANCE[input_channel] += random.randint(0, 8) - 4
+        Model372Mock.POWER[input_channel] += random.randint(0, 4) - 2
+        Model372Mock.QUADRATURE[input_channel] += random.randint(0, 2) - 1
+        return {"kelvin": max(0.01, Model372Mock.KELVIN[input_channel]),
+                "resistance": max(0.01, Model372Mock.RESISTANCE[input_channel]),
+                "power": max(0.01, Model372Mock.POWER[input_channel]),
+                "quadrature": max(0.01, Model372Mock.QUADRATURE[input_channel])}
 
     def configure_input(self, input_channel, settings):
         print("configuring input")

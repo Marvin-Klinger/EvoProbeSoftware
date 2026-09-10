@@ -16,11 +16,16 @@ class LakeshoreChannel(MeasurementDevice):
     SCANNER_SETTLE_TIME = 3
     READER_INTERVALL = 1
 
-    def __init__(self, data):
-        super().__init__(data)
+    def __init__(self, data, settings=None):
+        super().__init__(data, settings)
 
         self.input_channel = Model372.InputChannel(data["channel"])
         self.lakeshore = LakeshoreDevice.get_device(data["id"])
+        if settings is not None:
+            self.lakeshore.baud_rate = settings.get("baud_rate")
+            self.lakeshore.ip_address = settings.get("ip")
+            self.use_usb = settings.get("use_usb", False)
+            self.use_ip = settings.get("use_ip", False)
         self.lakeshore.add_channel(self.input_channel)
         self.calibration = None
         self.keys = (["kelvin", "resistance", "power"] +
@@ -59,7 +64,7 @@ class LakeshoreChannel(MeasurementDevice):
 
     # establishes connection to the physical device
     def connect(self):
-        self.lakeshore.connect()
+        self.lakeshore.connect(self.use_usb, self.use_ip)
         self.connected = self.lakeshore.connected
 
     def start_reading(self):
