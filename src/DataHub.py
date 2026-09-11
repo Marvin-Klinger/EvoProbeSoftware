@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, date, timedelta
 import time
 
 import numpy as np
@@ -19,6 +19,7 @@ class DataHub:
         self.save_path = os.path.dirname(save_path)
         self.save_path_extensions = [os.path.basename(save_path)]
         self.start_time = None
+        self.start_timestamp = None
         self.intervall = 2
 
         self.dfs = []
@@ -30,16 +31,15 @@ class DataHub:
 
     def initialize_files(self):
         # File Management
-        self.save_path = os.path.join(self.save_path, str(datetime.date.today()))
+        self.save_path = os.path.join(self.save_path, str(date.today()))
         count = 1
         while os.path.exists(self.save_path + "_" + str(count)):
             count += 1
         self.save_path = self. save_path + "_" + str(count)
         os.mkdir(self.save_path)
-        # TODO: is timestamp necessary/sensible?
-        columns = ["timedelta"]
+        columns = ["timestamp", "timedelta"]
         for i, d in enumerate(self.measurement_devices):
-            columns += [f"{i+1}_{keys}" for keys in d.logging_keys]
+            columns += [f"{i+1}-{keys}" for keys in d.logging_keys]
         master_df = pd.DataFrame(columns=columns)
         self.dfs.append(master_df)
         master_df.to_csv(os.path.join(self.save_path, self.save_path_extensions[0]), encoding="utf-8", index=False)
@@ -54,6 +54,7 @@ class DataHub:
     # starts the logging process and graph
     def start_logging(self):
         self.start_time = time.monotonic()
+        self.start_timestamp = datetime.now()
         for i, device in enumerate(self.measurement_devices):
             device.start_logging(self, i+1, self.start_time)
 
@@ -64,7 +65,7 @@ class DataHub:
         df.loc[len(df)] = data
         with open(os.path.join(self.save_path, self.save_path_extensions[logging_id]), "a") as file:
             file.write(",".join([str(i) for i in data]) + "\n")
-        self.graph.update_default(logging_id)
+        self.graph.update_data(logging_id)
 
         while data[1] >= self.logging_progress[logging_id]*self.intervall:
             new_reading = []
@@ -80,9 +81,11 @@ class DataHub:
             columns = [f"{logging_id}_{key}" for key in df.columns[2:]]
             row = self.logging_progress[logging_id]
             if row >= len(master_df):
-                master_df.loc[row, "timedelta"] = row * self.intervall
+                delta = row * self.intervall
+                master_df.loc[row, ["timestamp", "timedelta"]] = [self.start_timestamp+timedelta(seconds=delta), delta]
             master_df.loc[row, columns] = new_reading
 
+            self.graph.update_data(id, master_update=True)
             self.logging_progress[logging_id] += 1
 
             if min(self.logging_progress[1:]) > self.logging_progress[0]:

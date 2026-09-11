@@ -51,28 +51,6 @@ class GuiActive(qtw.QWidget):
         centre_graph.clicked.connect(lambda: self.graph_queue.put([QueueItemType.OPERATION, Operations.CENTRE_GRAPHS]))
         settings_layout.addWidget(centre_graph)
 
-        def on_change_auto_lim(state: int, axis: str):
-            print(f"{axis}-axis is set to {bool(state)}")
-            if self.graph_queue is None:
-                return
-
-            if axis == "x":
-                op = Operations.ENABLE_XLIM if state else Operations.DISABLE_XLIM
-            else:
-                op = Operations.ENABLE_YLIM if state else Operations.DISABLE_YLIM
-            self.graph_queue.put([QueueItemType.OPERATION, op])
-
-        auto_xlim.stateChanged.connect(lambda s, a="x": on_change_auto_lim(s, a))
-        auto_ylim.stateChanged.connect(lambda s, a="y": on_change_auto_lim(s, a))
-
-        reading_keys = []
-        for device in (self.controller.devices if self.controller else []):
-            reading_keys += device.logging_keys
-
-        for col in reading_keys:
-            graph = qtw.QCheckBox(col, tab)
-            settings_layout.addWidget(graph)
-
         visibility_holder = qtw.QWidget()
         visibility_layout = qtw.QHBoxLayout()
         visibility_holder.setLayout(visibility_layout)

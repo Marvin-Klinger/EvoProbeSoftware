@@ -12,8 +12,10 @@ class LiveGraph(pg.PlotWidget):
     def __init__(self, dfs, x_axis):
         super().__init__()
         self.dfs = dfs
-        self.columns = [list(self.dfs[0].columns[1:])] + [list(df.columns)[2:] for df in self.dfs[1:]]
+        self.columns = [list(df.columns)[2:] for df in self.dfs]
         self.x_axis = x_axis
+        self.x_axis_list = [x_axis] + self.columns
+        self.use_custom_x_axis = False
         self.y_axis = self.columns.copy()
 
         self.lines = [{} for i in range(len(self.dfs))]
@@ -29,7 +31,6 @@ class LiveGraph(pg.PlotWidget):
         self.addLegend()
         self.setDownsampling(auto=True)
         self.setClipToView(True)
-        # TODO: implement actual color/line variety
         color_generator = ColorFactory.make_colorgenerator()
         for i in range(1, len(self.columns)):
             for key in self.columns[i]:
@@ -40,11 +41,18 @@ class LiveGraph(pg.PlotWidget):
         return self.plot(x, y, name=name, pen=pen)
 
     # updates line of id using data from dfs
-    def update_default(self, id):
-        df = self.dfs[id]
-        x = list(df[self.x_axis])
-        for key, line in self.lines[id].items():
-            line.setData(x, list(df[key]))
+    def update_data(self, id, master_update=False):
+        if not self.use_custom_x_axis and not master_update:
+            df = self.dfs[id]
+            x = list(df[self.x_axis])
+            for key, line in self.lines[id].items():
+                line.setData(x, list(df[key]))
+        elif self.use_custom_x_axis and master_update:
+            df = self.dfs[0]
+            x = list(df[self.x_axis])
+            for key, line in self.lines[id].items():
+                key = f"{id}-{key}"
+                line.setData(x, list(df[key]))
 
     # sets the x/ylim values of the plot according to the min and max values in df
     def centre_graphs(self):
