@@ -78,14 +78,14 @@ class DataHub:
                 for i in range(2, len(data)):
                     new_reading.append(last_reading[i]*old_x + data[i]*new_x)
             master_df = self.dfs[0]
-            columns = [f"{logging_id}_{key}" for key in df.columns[2:]]
+            columns = [f"{logging_id}-{key}" for key in df.columns[2:]]
             row = self.logging_progress[logging_id]
             if row >= len(master_df):
                 delta = row * self.intervall
                 master_df.loc[row, ["timestamp", "timedelta"]] = [self.start_timestamp+timedelta(seconds=delta), delta]
             master_df.loc[row, columns] = new_reading
 
-            self.graph.update_data(id, master_update=True)
+            self.graph.update_data(logging_id, master_update=True)
             self.logging_progress[logging_id] += 1
 
             if min(self.logging_progress[1:]) > self.logging_progress[0]:

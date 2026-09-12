@@ -12,7 +12,7 @@ class GuiActive(qtw.QWidget):
         self.main_window = main_window
         self.controller = controller
         self.datahub = self.controller.datahub if controller else None
-        self.graphs = {}
+        self.graph = self.datahub.graph
 
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -40,12 +40,15 @@ class GuiActive(qtw.QWidget):
         settings_holder.setLayout(settings_layout)
         layout.addWidget(settings_holder)
 
-        auto_xlim = qtw.QCheckBox("Auto adjust X-Axis")
-        auto_xlim.setChecked(True)
-        settings_layout.addWidget(auto_xlim)
-
-        auto_ylim = qtw.QCheckBox("Auto adjust Y-Axis")
-        settings_layout.addWidget(auto_ylim)
+        x_axis_label = qtw.QLabel("Select X-Axis:")
+        settings_layout.addWidget(x_axis_label)
+        x_axis_select = qtw.QComboBox()
+        for c in self.graph.x_axis_list:
+            x_axis_select.addItem(c, c)
+        x_axis_select.setCurrentIndex(self.graph.x_axis_list.index(self.graph.x_axis))
+        settings_layout.addWidget(x_axis_select)
+        x_axis_select.currentIndexChanged.connect(lambda i: self.graph.change_x_axis(x_axis_select.currentData()))
+        settings_layout.addSpacing(10)
 
         centre_graph = qtw.QPushButton("Centre Graph")
         centre_graph.clicked.connect(lambda: self.graph_queue.put([QueueItemType.OPERATION, Operations.CENTRE_GRAPHS]))
@@ -57,14 +60,14 @@ class GuiActive(qtw.QWidget):
         settings_layout.addWidget(visibility_holder)
         show_btn = qtw.QPushButton("Show All")
         visibility_layout.addWidget(show_btn)
-        show_btn.clicked.connect(self.datahub.graph.show_graphs)
+        show_btn.clicked.connect(self.graph.show_graphs)
         hide_btn = qtw.QPushButton("Hide All")
         visibility_layout.addWidget(hide_btn)
-        hide_btn.clicked.connect(self.datahub.graph.hide_graphs)
+        hide_btn.clicked.connect(self.graph.hide_graphs)
 
         settings_layout.addStretch()
 
         # Graph
-        layout.addWidget(self.datahub.graph)
+        layout.addWidget(self.graph)
 
         self.tabs.addTab(tab, "Graph")

@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import Enum
 import pandas as pd
 import random
@@ -14,17 +15,17 @@ class LiveGraph(pg.PlotWidget):
         self.dfs = dfs
         self.columns = [list(df.columns)[2:] for df in self.dfs]
         self.x_axis = x_axis
-        self.x_axis_list = [x_axis] + self.columns
+        self.x_axis_list = list(self.dfs[0].columns)
         self.use_custom_x_axis = False
         self.y_axis = self.columns.copy()
 
         self.lines = [{} for i in range(len(self.dfs))]
-        self.initialize_default()
+        self.initialize()
 
-    def initialize_default(self):
+    def initialize(self):
         self.setBackground("w")
         style = {"color": "grey", "font-size": "20px"}
-        self.setLabel("bottom", "time (s)", **style)
+        self.setLabel("bottom", self.x_axis, **style)
         self.showGrid(True, True, alpha=0.3)
         self.setMinimumSize(400, 400)
 
@@ -44,21 +45,23 @@ class LiveGraph(pg.PlotWidget):
     def update_data(self, id, master_update=False):
         if not self.use_custom_x_axis and not master_update:
             df = self.dfs[id]
-            x = list(df[self.x_axis])
+            if self.x_axis == "timestamp":
+                x = list(df[self.x_axis].map(lambda d: d.timestamp()))
+            else:
+                x = list(df[self.x_axis])
             for key, line in self.lines[id].items():
                 line.setData(x, list(df[key]))
+
         elif self.use_custom_x_axis and master_update:
             df = self.dfs[0]
             x = list(df[self.x_axis])
             for key, line in self.lines[id].items():
                 key = f"{id}-{key}"
+                # if self.x_axis == key:
+                #     continue
                 line.setData(x, list(df[key]))
 
-    # sets the x/ylim values of the plot according to the min and max values in df
     def centre_graphs(self):
-        pass
-
-    def change_displayed_graphs(self, graphs):
         pass
 
     def hide_graphs(self, graphs=False):
@@ -70,6 +73,20 @@ class LiveGraph(pg.PlotWidget):
         if not graphs:
             for line in chain(*[group.values() for group in self.lines]):
                 line.show()
+
+    # changes the x_axis used to display the graphs and handles whether to use master or individual dfs
+    def change_x_axis(self, x_axis):
+        print(x_axis)
+        self.x_axis = x_axis
+        self.use_custom_x_axis = x_axis not in ["timestamp", "timedelta"]
+        if x_axis == "timestamp":
+            self.setAxisItems({"bottom": pg.DateAxisItem()})
+        else:
+            self.setAxisItems({"bottom": pg.AxisItem(orientation="bottom")})
+        for i in range(1, len(self.dfs)):
+            self.update_data(i, master_update=self.use_custom_x_axis)
+        style = {"color": "grey", "font-size": "20px"}
+        self.setLabel("bottom", x_axis, **style)
 
 
 class QueueItemType(Enum):
