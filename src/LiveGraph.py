@@ -18,18 +18,19 @@ class LiveGraph(pg.PlotWidget):
         self.x_axis_list = list(self.dfs[0].columns)
         self.use_custom_x_axis = False
         self.y_axis = self.columns.copy()
+        self.legend = None
 
         self.lines = [{} for i in range(len(self.dfs))]
         self.initialize()
 
     def initialize(self):
+        self.setMinimumSize(400, 400)
         self.setBackground("w")
         style = {"color": "grey", "font-size": "20px"}
         self.setLabel("bottom", self.x_axis, **style)
         self.showGrid(True, True, alpha=0.3)
-        self.setMinimumSize(400, 400)
 
-        self.addLegend()
+        self.legend = self.addLegend()
         self.setDownsampling(auto=True)
         self.setClipToView(True)
         color_generator = ColorFactory.make_colorgenerator()
@@ -87,6 +88,13 @@ class LiveGraph(pg.PlotWidget):
             self.update_data(i, master_update=self.use_custom_x_axis)
         style = {"color": "grey", "font-size": "20px"}
         self.setLabel("bottom", x_axis, **style)
+
+    def set_legend_visibility(self, visible=True):
+        if visible:
+            self.legend.show()
+            self.legend.anchor((-0.4, -0.4), (0, 0))
+        else:
+            self.legend.hide()
 
 
 class QueueItemType(Enum):

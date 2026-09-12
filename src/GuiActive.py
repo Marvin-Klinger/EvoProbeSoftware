@@ -40,8 +40,7 @@ class GuiActive(qtw.QWidget):
         settings_holder.setLayout(settings_layout)
         layout.addWidget(settings_holder)
 
-        x_axis_label = qtw.QLabel("Select X-Axis:")
-        settings_layout.addWidget(x_axis_label)
+        settings_layout.addWidget(qtw.QLabel("Select X-Axis"))
         x_axis_select = qtw.QComboBox()
         for c in self.graph.x_axis_list:
             x_axis_select.addItem(c, c)
@@ -50,12 +49,10 @@ class GuiActive(qtw.QWidget):
         x_axis_select.currentIndexChanged.connect(lambda i: self.graph.change_x_axis(x_axis_select.currentData()))
         settings_layout.addSpacing(10)
 
-        centre_graph = qtw.QPushButton("Centre Graph")
-        centre_graph.clicked.connect(lambda: self.graph_queue.put([QueueItemType.OPERATION, Operations.CENTRE_GRAPHS]))
-        settings_layout.addWidget(centre_graph)
-
+        settings_layout.addWidget(qtw.QLabel("Lines"))
         visibility_holder = qtw.QWidget()
         visibility_layout = qtw.QHBoxLayout()
+        visibility_layout.setContentsMargins(0, 0, 0, 0)
         visibility_holder.setLayout(visibility_layout)
         settings_layout.addWidget(visibility_holder)
         show_btn = qtw.QPushButton("Show All")
@@ -64,6 +61,21 @@ class GuiActive(qtw.QWidget):
         hide_btn = qtw.QPushButton("Hide All")
         visibility_layout.addWidget(hide_btn)
         hide_btn.clicked.connect(self.graph.hide_graphs)
+        settings_layout.addSpacing(10)
+
+        settings_layout.addWidget(qtw.QLabel("Legend"))
+        legend_holder = qtw.QWidget()
+        legend_layout = qtw.QHBoxLayout()
+        legend_layout.setContentsMargins(0, 0, 0, 0)
+        legend_holder.setLayout(legend_layout)
+        settings_layout.addWidget(legend_holder)
+        show_btn = qtw.QPushButton("Show Legend")
+        legend_layout.addWidget(show_btn)
+        show_btn.clicked.connect(lambda: self.graph.set_legend_visibility(True))
+        hide_btn = qtw.QPushButton("Hide Legend")
+        legend_layout.addWidget(hide_btn)
+        hide_btn.clicked.connect(lambda: self.graph.set_legend_visibility(False))
+        settings_layout.addSpacing(10)
 
         settings_layout.addStretch()
 
