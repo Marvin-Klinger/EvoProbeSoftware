@@ -30,7 +30,7 @@ class Controller:
         devices = []
         setup_json = FileHandler.get_setup_json()
         slots = setup_json.get("slots", [])
-        settings = setup_json.get("devices", [])
+        settings = {d["id"]: d for d in setup_json.get("devices", [])}
         for i, slot in enumerate(slots):
             if slot is None:
                 continue
@@ -38,17 +38,11 @@ class Controller:
             print(slot)
             match slot.get("type", None):
                 case mdType.LAKESHORE:
-                    lhc = LakeshoreChannel(slot, settings[i] if len(settings) > i else None)
-                    devices.append(lhc)
-                case mdType.MPV:
-                    mpv = MPVWrapper(slot)
-                    devices.append(mpv)
+                    devices.append(LakeshoreChannel(slot, settings.get(slot["id"], None)))
                 case mdType.DYNACOOL:
-                    dynacool = DynacoolChannel(slot)
-                    devices.append(dynacool)
+                    devices.append(DynacoolChannel(slot))
                 case mdType.PPMS6000:
-                    ppms = PPMS6000Channel(slot)
-                    devices.append(ppms)
+                    devices.append(PPMS6000Channel(slot))
                 case _:
                     pass
         self.devices = devices

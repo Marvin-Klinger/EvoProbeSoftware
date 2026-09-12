@@ -1,4 +1,5 @@
 from enum import Enum, IntEnum
+import numpy as np
 
 
 # stores metadata for device used for header
@@ -40,3 +41,24 @@ class ColorFactory:
             for c in ColorFactory.COLORS_RGB:
                 yield c
 
+
+# creates calibration functions from given parameters
+class CalibrationFactory:
+    @staticmethod
+    def create_function(parameters: dict):
+        if parameters is None:
+            return lambda x: x
+
+        def func(resistance):
+            if resistance < parameters["min_resistance"] or resistance > parameters["max_resistance"]:
+                return np.nan
+            x = parameters["rescale_0"] - np.log(resistance - parameters["rescale_1"])
+            total = 0
+            for i in range(len(parameters["func_params"])):
+                total += parameters["func_params"][i] * x ** i
+            t = np.exp(total)
+            if t < parameters["min_temperature"] or t > parameters["max_temperature"]:
+                return np.nan
+            return t
+
+        return func

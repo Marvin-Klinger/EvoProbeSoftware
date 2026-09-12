@@ -122,7 +122,7 @@ class PreviewCard:
 
             readings = self.device.get_logging_readings()
             for i, key in enumerate(self.device.logging_keys):
-                self.reading_displays[key].setText(f"{readings[i]:.1f}")
+                self.reading_displays[key].setText(f"{readings[i]:.2f}")
         except RuntimeError:
             print("runtime err")
             self.timer.stop()

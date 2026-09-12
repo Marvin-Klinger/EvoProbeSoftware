@@ -1,7 +1,7 @@
 from lakeshore import Model372InputSetupSettings
 from PyQt5 import QtGui as qtg
 
-# Lakeshore settings
+# Default Lakeshore Settings
 LAKESHORE_CHANNEL_SETTINGS = Model372InputSetupSettings(
     mode=None,
     excitation_range=None,
@@ -25,7 +25,15 @@ PUCK_SETTINGS = {
     "slots": [
         {"name": "Sample 1", "read_only": False},
         {"name": "Sample 2", "read_only": False},
-        {"name": "Thermometer", "read_only": True}
+        {"name": "Thermometer", "read_only": True,
+         "calibration": {"min_resistance": 0,
+                         "max_resistance": 1000,
+                         "rescale_0": 0,
+                         "rescale_1": 0,
+                         "func_params": [0, -0.5],
+                         "min_temperature": 0,
+                         "max_temperature": 4000}
+         }
     ]
 }
 

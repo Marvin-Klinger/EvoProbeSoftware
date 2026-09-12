@@ -9,17 +9,18 @@ from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
 import DefaultSettings as ds
-from ExtraClasses import MeasurementDeviceType as mdType
+from ExtraClasses import MeasurementDeviceType as mdType, CalibrationFactory
 
 
 class MeasurementDevice:
 
     def __init__(self, data, settings=None):
         self.info = None
-        self.calibration = None
         self.keys = []
         self.logging_keys = [key[:3] for key in self.keys]
         self.plotting_keys = self.logging_keys.copy()
+        self.calibration = CalibrationFactory.create_function(data.get("calibration", None))
+        self.calibration_mapping = {}
         self.connected = False
         self.name = data.get("name", "no_name")
 
@@ -30,17 +31,24 @@ class MeasurementDevice:
         self.logging_id = None
         self.start_time = None
 
-    # gets raw readings from device and applies calibration if necessary
+    # gets raw readings from device
     def get_readings(self):
         return {}
 
-    # converts readings to data usable by DataHub
+    # converts readings to data usable by DataHub and applies calibration if available
     def get_logging_readings(self):
         readings = self.get_readings()
+        readings = self.apply_calibration(readings)
         logging_readings = []
         for key in self.keys:
             logging_readings.append(readings[key])
         return logging_readings
+
+    def apply_calibration(self, readings):
+        if self.calibration is not None:
+            for source, target in self.calibration_mapping.items():
+                readings[target] = self.calibration(readings.get(source, 0))
+        return readings
 
     def log_readings(self, readings):
         if self.datahub is not None and self.logging_id is not None:

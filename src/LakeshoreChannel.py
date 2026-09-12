@@ -18,6 +18,9 @@ class LakeshoreChannel(MeasurementDevice):
 
     def __init__(self, data, settings=None):
         super().__init__(data, settings)
+        print(data)
+        print(settings)
+        print(self.calibration)
 
         self.input_channel = Model372.InputChannel(data["channel"])
         self.lakeshore = LakeshoreDevice.get_device(data["id"])
@@ -27,13 +30,14 @@ class LakeshoreChannel(MeasurementDevice):
             self.use_usb = settings.get("use_usb", False)
             self.use_ip = settings.get("use_ip", False)
         self.lakeshore.add_channel(self.input_channel)
-        self.calibration = None
+
         self.keys = (["kelvin", "resistance", "power"] +
                      (["quadrature"] if self.input_channel != Model372.InputChannel.CONTROL else []))
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
-        self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
+        self.calibration_mapping = {"resistance": "kelvin"}
         self.name += f"_Ch{self.input_channel.value}"
+        self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
 
         self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
         self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "raw",
@@ -42,7 +46,6 @@ class LakeshoreChannel(MeasurementDevice):
         self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
-    # TODO: add calibration
     def get_readings(self):
         if self.ready_to_read():
             self.last_reading = self.lakeshore.get_readings(self.input_channel)
@@ -51,12 +54,12 @@ class LakeshoreChannel(MeasurementDevice):
             return {key: np.nan for key in self.keys}
 
     # returns readings converted to list
-    def get_logging_readings(self):
-        readings = self.get_readings()
-        logging_readings = []
-        for key in self.keys:
-            logging_readings.append(readings[key])
-        return logging_readings
+    # def get_logging_readings(self):
+    #     readings = self.get_readings()
+    #     logging_readings = []
+    #     for key in self.keys:
+    #         logging_readings.append(readings[key])
+    #     return logging_readings
 
     # configures channels setup settings in lakeshore device
     def configure(self, settings: Model372InputSetupSettings):

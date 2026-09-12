@@ -64,6 +64,7 @@ class GuiSetup(qtw.QWidget):
             index = 0
         self.puck_select.setCurrentIndex(index)
         self.current_puck = pucks[self.puck_select.currentData()]
+        print(self.current_puck)
         serial_form.addRow(" Puck ", self.puck_select)
 
         rod_select = qtw.QComboBox()
@@ -136,7 +137,6 @@ class GuiSetup(qtw.QWidget):
                 else self.current_puck["slots"][i].get("name", f"Sample {i + 1}")
             self.slots[i]["device"].setCurrentIndex(slot["device"])
             self.slot_selections[i]["extra"] = slot["extra"]
-        print(self.slot_selections)
         self.pause_saving = True
         self.update_slots()
 
@@ -180,7 +180,6 @@ class GuiSetup(qtw.QWidget):
         sample_name.setDisabled(self.current_puck["slots"][x].get("read_only", False))
 
         def on_edit():
-            print("changed text")
             sample_name.setCursorPosition(0)
             self.save_setup_settings()
 
@@ -279,6 +278,9 @@ class GuiSetup(qtw.QWidget):
                                  "device": self.slots[i]["device"].currentIndex(),
                                  "extra": self.slot_selections[i]["extra"]} for i in range(len(self.slots))]
         }
+        for i, slot_dict in enumerate(self.current_puck.get("slots", [])):
+            if "calibration" in slot_dict and data["slots"][i] is not None:
+                data["slots"][i]["calibration"] = slot_dict["calibration"]
         FileHandler.save_setup_json(data)
 
     def update_slots(self):
