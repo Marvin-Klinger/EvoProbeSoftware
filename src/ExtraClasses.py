@@ -44,10 +44,13 @@ class ColorFactory:
 
 # creates calibration functions from given parameters
 class CalibrationFactory:
+    REQUIRED_PARAMETERS = ["min_resistance", "max_resistance", "rescale_0", "rescale_1",
+                           "func_params", "min_temperature", "max_temperature"]
+
     @staticmethod
     def create_function(parameters: dict):
-        if parameters is None:
-            return lambda x: x
+        if parameters is None or any((key not in CalibrationFactory.REQUIRED_PARAMETERS for key in parameters)):
+            return None
 
         def func(resistance):
             if resistance < parameters["min_resistance"] or resistance > parameters["max_resistance"]:

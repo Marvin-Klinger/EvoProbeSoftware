@@ -70,26 +70,27 @@ class GuiSequence(qtw.QWidget):
         devices_layout = qtw.QHBoxLayout()
         devices_holder.setLayout(devices_layout)
         preview_layout.addRow(devices_holder)
+        devices_layout.setSpacing(10)
 
         for device in self.devices:
             print("previewing device: ", device)
-            card = PreviewCard(device, devices_layout)
+            card = PreviewCard(device)
+            devices_layout.addWidget(card)
         print("done")
 
         self.layout().addStretch()
 
 
-class PreviewCard:
+class PreviewCard(qtw.QWidget):
 
-    def __init__(self, device: MeasurementDevice, parent_layout: qtw.QHBoxLayout):
+    def __init__(self, device: MeasurementDevice):
+        super().__init__()
+
         self.device = device
-        self.parent_layout = parent_layout
         self.timer = None
 
-        device_holder = qtw.QWidget()
         device_layout = qtw.QFormLayout()
-        device_holder.setLayout(device_layout)
-        parent_layout.addWidget(device_holder)
+        self.setLayout(device_layout)
 
         device_name = qtw.QLabel(device.info.name)
         device_layout.addRow(device_name)
@@ -106,7 +107,7 @@ class PreviewCard:
             self.reading_displays[key] = display
             device_layout.addRow(f"{key}: ", display)
 
-        self.timer = QTimer(device_holder)
+        self.timer = QTimer(self)
         self.timer.timeout.connect(lambda: self.update())
         self.timer.start(2000)
 

@@ -14,13 +14,12 @@ from src.ExtraClasses import DeviceInfo
 class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
-    READER_INTERVALL = 1
+    READER_INTERVALL = 0.5
+    KEYS = ["kelvin", "resistance", "power", "quadrature"]
+    CALIBRATION_MAPPING = {"resistance": "kelvin"}
 
     def __init__(self, data, settings=None):
         super().__init__(data, settings)
-        print(data)
-        print(settings)
-        print(self.calibration)
 
         self.input_channel = Model372.InputChannel(data["channel"])
         self.lakeshore = LakeshoreDevice.get_device(data["id"])
@@ -30,12 +29,11 @@ class LakeshoreChannel(MeasurementDevice):
             self.use_usb = settings.get("use_usb", False)
             self.use_ip = settings.get("use_ip", False)
         self.lakeshore.add_channel(self.input_channel)
-
-        self.keys = (["kelvin", "resistance", "power"] +
-                     (["quadrature"] if self.input_channel != Model372.InputChannel.CONTROL else []))
+        key_bool_map = [self.calibration is not None, True, True, self.input_channel != Model372.InputChannel.CONTROL]
+        self.keys = [key for key, use in zip(LakeshoreChannel.KEYS, key_bool_map) if use]
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
         self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
-        self.calibration_mapping = {"resistance": "kelvin"}
+        self.calibration_mapping = LakeshoreChannel.CALIBRATION_MAPPING
         self.name += f"_Ch{self.input_channel.value}"
         self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
 
