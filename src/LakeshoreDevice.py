@@ -22,6 +22,7 @@ class LakeshoreDevice:
     IP_ADDRESS = "192.168.0.12"
     BAUD_RATE = 57600
     DEBUG_MODE = True
+    SCANNER_SETTLE_TIME = 3
 
     Devices = {}
 
@@ -38,9 +39,12 @@ class LakeshoreDevice:
         self.is_cycling = False
         self.cycle_is_alive = False
         self.connected = False
+        # TODO: consider multiple locks for different use-cases
         self.lock = Lock()
 
         self.info = None
+
+        self.scanner_ready_thread_id = 0
 
     def add_channel(self, channel: Model372.InputChannel):
         self.lock.acquire()
@@ -112,35 +116,34 @@ class LakeshoreDevice:
                 self.scanner_queue.append(channel)
                 return
 
-            self.lakeshore.set_scanner_status(channel.value, False)
-            self.current_channel = channel
+            self.set_scanner_position(channel)
             self.scanner_queue.append(channel)
 
-            self.is_ready = False
-
-            def wait_for_ready():
-                # TODO: find actual settle time
-                time.sleep(3)
-                self.is_ready = True
-
-            t = Thread(target=wait_for_ready, daemon=True)
-            t.start()
-
     def set_scanner_position(self, input_channel: Model372.InputChannel):
-        if input_channel == Model372.InputChannel.CONTROL or input_channel == self.current_channel:
+        if input_channel == Model372.InputChannel.CONTROL:
             return
 
         self.lakeshore.set_scanner_status(input_channel.value, False)
         self.current_channel = input_channel
         self.is_ready = False
+        self.scanner_ready_thread_id = (self.scanner_ready_thread_id+1) % 0b10000000
 
         def wait_for_ready():
             # TODO: find actual settle time
-            time.sleep(1)
-            self.is_ready = True
+            id = self.scanner_ready_thread_id
+            time.sleep(LakeshoreDevice.SCANNER_SETTLE_TIME)
+            if id == self.scanner_ready_thread_id:
+                self.is_ready = True
 
         t = Thread(target=wait_for_ready, daemon=True)
         t.start()
+
+    # gets scanner position from the physical device
+    def get_scanner_position(self):
+        try:
+            return Model372.InputChannel(self.lakeshore.get_scanner_status()["input_channel"])
+        except:
+            return None
 
     # configures physical device
     def configure(self, input_channel: Model372.InputChannel, settings: Model372InputSetupSettings):
