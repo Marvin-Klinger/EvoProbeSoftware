@@ -25,7 +25,7 @@ class MeasurementDevice:
         self.name = data.get("name", "no_name")
 
         self.is_logging = False
-        self.intervall = 2
+        self.interval = 2
         self.last_reading = {}
         self.datahub = None
         self.logging_id = None
@@ -82,7 +82,7 @@ class MeasurementDevice:
             readings = device.get_logging_readings()
             time_data = [datetime.now(), time.monotonic() - device.start_time]
             device.log_readings(time_data + readings)
-            time.sleep(device.intervall)
+            time.sleep(device.interval)
 
     # starts the logging and writing process
     def start_logging(self, datahub, logging_id: int, start_time):

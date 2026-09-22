@@ -46,6 +46,7 @@ class Controller:
                 case _:
                     pass
         self.devices = devices
+        self.devices.append(MPVWrapper.get_device())
         print("Devices:", self.devices)
 
         for device in self.devices:
