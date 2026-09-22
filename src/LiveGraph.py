@@ -4,11 +4,13 @@ import pandas as pd
 import random
 import time
 import pyqtgraph as pg
+from PyQt5.QtCore import pyqtSignal
 from itertools import chain
 from ExtraClasses import ColorFactory
 
 
 class LiveGraph(pg.PlotWidget):
+    signal_data_updated = pyqtSignal()
 
     def __init__(self, dfs, x_axis):
         super().__init__()
@@ -58,9 +60,9 @@ class LiveGraph(pg.PlotWidget):
             x = list(df[self.x_axis])
             for key, line in self.lines[id].items():
                 key = f"{id}-{key}"
-                # if self.x_axis == key:
-                #     continue
                 line.setData(x, list(df[key]))
+
+        self.signal_data_updated.emit()
 
     def centre_graphs(self):
         pass

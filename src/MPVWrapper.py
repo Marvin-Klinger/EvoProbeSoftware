@@ -7,6 +7,7 @@ from enum import IntEnum
 import threading
 
 from lakeshore import Model372
+from ppms_qdinstrument import PPMSClient, BridgeConfig, BridgeMeasurement
 
 from src.ExtraClasses import DeviceInfo
 from src.MeasurementDevice import MeasurementDevice, DeviceCard
@@ -17,18 +18,23 @@ from ExtraClasses import MeasurementDeviceType as mdType
 import DefaultSettings as ds
 
 
-class MPVWrapper:
+class MPVWrapper(MeasurementDevice):
     Device = None
 
-    def __init__(self):
+    KEYS = ["temperature", "field"]
+
+    def __init__(self, data=None, settings=None):
+        super().__init__({"name": "mpv"})
+
         self.server = None
         self.client = None
+        self.dll_client = None
+        self.type = None
         self.lock = threading.Lock()
 
         self.last_values = {}
         self.info = DeviceInfo(name="MPV", version=0)
-        self.calibration = None
-        self.keys = ["temperature", "field"]
+        self.keys = MPVWrapper.KEYS
         self.logging_keys = ["temp", "field"]
         self.plotting_keys = ["temp", "field"]
         self.connected = False
@@ -44,31 +50,27 @@ class MPVWrapper:
         self.last_values = readings
         return readings
 
-    # converts readings to data usable by DataHub
-    def get_logging_readings(self):
-        readings = self.get_readings()
-        logging_readings = []
-        for key in self.keys:
-            logging_readings.append(readings[key])
-        return logging_readings
-
     # configures physical device
-    def configure(self, bridge_channel: int, channel_on: bool,
-                  current_limit: float, power_limit: float, voltage_limit: float):
+    def configure_bridge(self, bridge_channel: int, channel_on: bool,
+                         current_limit: float, power_limit: float, voltage_limit: float):
         self.lock.acquire()
         try:
-            self.client.resistivity.bridge_setup(bridge_channel, channel_on, current_limit, power_limit, voltage_limit)
+            if self.type == mdType.PPMS6000:
+                # TODO: find better signature
+                self.dll_client.set_bridge(bridge_channel, current_limit, power_limit)
+            else:
+                self.client.resistivity.bridge_setup(bridge_channel, channel_on, current_limit, power_limit, voltage_limit)
         except:
             print("couldn't configure bridge channel")
         self.lock.release()
 
     # establishes connection to the physical device
     def connect(self):
+        print("try connecting")
+        self.lock.acquire(blocking=True)
         if self.connected:
             return
 
-        print("try connecting")
-        self.lock.acquire(blocking=True)
         try:
             self.server = mpv.Server()
             self.client = mpv.Client()
@@ -81,6 +83,12 @@ class MPVWrapper:
             return
         print("connection successful")
         self.connected = True
+
+        match self.server.instrument_name():
+            case "PPMS":
+                self.type = mdType.PPMS6000
+            case "Dynacool":
+                self.type = mdType.DYNACOOL
         self.lock.release()
 
     # connects to the devices asynchronously to not freeze the GUI
@@ -123,10 +131,15 @@ class MPVWrapper:
 
         self.lock.acquire(blocking=True)
         try:
-            value["current"] = self.client.resistivity.get_current(bridge_channel)
-            value["resistance"] = self.client.resistivity.get_resistance(bridge_channel)
+            if self.type == mdType.PPMS6000:
+                measurement = self.dll_client.get_bridge(bridge_channel)
+                value["current"] = measurement.current_uA
+                value["resistance"] = measurement.resistance_ohm
+            else:
+                value["current"] = self.client.resistivity.get_current(bridge_channel)
+                value["resistance"] = self.client.resistivity.get_resistance(bridge_channel)
         except:
-            # print("couldn't read bridge channel")
+            print("couldn't read bridge channel")
             pass
         self.lock.release()
         return value

@@ -29,6 +29,7 @@ class LakeshoreChannel(MeasurementDevice):
             self.use_usb = settings.get("use_usb", False)
             self.use_ip = settings.get("use_ip", False)
         self.lakeshore.add_channel(self.input_channel)
+
         key_bool_map = [self.calibration is not None, True, True, self.input_channel != Model372.InputChannel.CONTROL]
         self.keys = [key for key, use in zip(LakeshoreChannel.KEYS, key_bool_map) if use]
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
@@ -37,9 +38,6 @@ class LakeshoreChannel(MeasurementDevice):
         self.name += f"_Ch{self.input_channel.value}"
         self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
 
-        self.df = pd.DataFrame(columns=["timestamp", "timedelta"] + self.logging_keys)
-        self.save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "raw",
-                                                      f"{self.name}_Ch{self.input_channel.value}.csv"))
         self.intervall = LakeshoreChannel.READER_INTERVALL
         self.last_reading = {key: np.nan for key in self.keys}
 

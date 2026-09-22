@@ -49,6 +49,7 @@ DARK_THEME = {
     "border": "#424242",
 }
 
+
 class BridgeHeaterGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -112,10 +113,10 @@ class BridgeHeaterGUI:
         self._schedule_poll()
         self._watch_theme_changes()
 
-
     def _get_windows_theme_mode(self):
         try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")
             value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
             return "light" if int(value) else "dark"
         except Exception:
@@ -152,12 +153,16 @@ class BridgeHeaterGUI:
         style.configure("TLabelframe", background=palette["bg"], foreground=palette["fg"], borderwidth=1)
         style.configure("TLabelframe.Label", background=palette["bg"], foreground=palette["fg"], font=heading_font)
         style.configure("TLabel", background=palette["bg"], foreground=palette["fg"])
-        style.configure("TButton", background=palette["card"], foreground=palette["fg"], bordercolor=palette["border"], focusthickness=1, focuscolor=palette["accent"])
+        style.configure("TButton", background=palette["card"], foreground=palette["fg"], bordercolor=palette["border"],
+                        focusthickness=1, focuscolor=palette["accent"])
         style.map("TButton", background=[("active", palette["accent"])], foreground=[("active", palette["card"])])
         style.configure("TCheckbutton", background=palette["bg"], foreground=palette["fg"])
-        style.configure("TCombobox", fieldbackground=palette["input"], background=palette["input"], foreground=palette["fg"], arrowcolor=palette["fg"], bordercolor=palette["border"])
-        style.configure("TEntry", fieldbackground=palette["input"], foreground=palette["fg"], bordercolor=palette["border"])
-        style.configure("TSpinbox", fieldbackground=palette["input"], foreground=palette["fg"], bordercolor=palette["border"])
+        style.configure("TCombobox", fieldbackground=palette["input"], background=palette["input"],
+                        foreground=palette["fg"], arrowcolor=palette["fg"], bordercolor=palette["border"])
+        style.configure("TEntry", fieldbackground=palette["input"], foreground=palette["fg"],
+                        bordercolor=palette["border"])
+        style.configure("TSpinbox", fieldbackground=palette["input"], foreground=palette["fg"],
+                        bordercolor=palette["border"])
 
         self._set_dark_title_bar(mode == "dark")
 
@@ -171,26 +176,31 @@ class BridgeHeaterGUI:
         frm_conn = ttk.LabelFrame(self.root, text="Connection")
         frm_conn.pack(fill="x", padx=10, pady=8)
         ttk.Label(frm_conn, text="Backend").grid(row=0, column=0, sticky="w", **pad)
-        backend_box = ttk.Combobox(frm_conn, textvariable=self.backend_name, width=16, state="readonly", values=BACKENDS)
+        backend_box = ttk.Combobox(frm_conn, textvariable=self.backend_name, width=16, state="readonly",
+                                   values=BACKENDS)
         backend_box.grid(row=0, column=1, sticky="w", **pad)
         ttk.Label(frm_conn, text="QDInstrument.dll").grid(row=1, column=0, sticky="w", **pad)
-        ttk.Entry(frm_conn, textvariable=self.dll_path, width=50).grid(row=1, column=1, columnspan=4, sticky="ew", **pad)
+        ttk.Entry(frm_conn, textvariable=self.dll_path, width=50).grid(row=1, column=1, columnspan=4, sticky="ew",
+                                                                       **pad)
         ttk.Checkbutton(frm_conn, text="Remote", variable=self.remote).grid(row=2, column=0, sticky="w", **pad)
         ttk.Label(frm_conn, text="IP").grid(row=2, column=1, sticky="e", **pad)
         ttk.Entry(frm_conn, textvariable=self.ip, width=14).grid(row=2, column=2, sticky="w", **pad)
         ttk.Label(frm_conn, text="Port").grid(row=2, column=3, sticky="e", **pad)
         ttk.Entry(frm_conn, textvariable=self.port, width=8).grid(row=2, column=4, sticky="w", **pad)
-        ttk.Button(frm_conn, text="Connect", command=self.connect).grid(row=0, column=5, rowspan=2, sticky="nsew", **pad)
+        ttk.Button(frm_conn, text="Connect", command=self.connect).grid(row=0, column=5, rowspan=2, sticky="nsew",
+                                                                        **pad)
 
         frm_common = ttk.LabelFrame(self.root, text="Bridge Setup")
         frm_common.pack(fill="x", padx=10, pady=8)
         ttk.Label(frm_common, text="Channel").grid(row=0, column=0, sticky="w", **pad)
-        ttk.Spinbox(frm_common, from_=1, to=4, textvariable=self.channel, width=6).grid(row=0, column=1, sticky="w", **pad)
+        ttk.Spinbox(frm_common, from_=1, to=4, textvariable=self.channel, width=6).grid(row=0, column=1, sticky="w",
+                                                                                        **pad)
         ttk.Label(frm_common, text="Power limit (µW)").grid(row=0, column=2, sticky="w", **pad)
         ttk.Entry(frm_common, textvariable=self.power_limit_uW, width=12).grid(row=0, column=3, sticky="w", **pad)
         ttk.Checkbutton(frm_common, text="Use DC", variable=self.drive_dc).grid(row=0, column=4, sticky="w", **pad)
         ttk.Label(frm_common, text="Mode").grid(row=0, column=5, sticky="w", **pad)
-        ttk.Combobox(frm_common, textvariable=self.mode_name, width=12, state="readonly", values=["Standard", "Fast", "HiRes"]).grid(row=0, column=6, sticky="w", **pad)
+        ttk.Combobox(frm_common, textvariable=self.mode_name, width=12, state="readonly",
+                     values=["Standard", "Fast", "HiRes"]).grid(row=0, column=6, sticky="w", **pad)
         ttk.Label(frm_common, text="Controller mode").grid(row=1, column=0, sticky="w", **pad)
         mode_box = ttk.Combobox(frm_common, textvariable=self.app_mode, width=18, state="readonly", values=APP_MODES)
         mode_box.grid(row=1, column=1, sticky="w", **pad)
@@ -206,7 +216,8 @@ class BridgeHeaterGUI:
         ttk.Label(self.frm_ramp, text="Step interval (s)").grid(row=1, column=2, sticky="w", **pad)
         ttk.Entry(self.frm_ramp, textvariable=self.step_interval_s, width=12).grid(row=1, column=3, sticky="w", **pad)
         ttk.Label(self.frm_ramp, text="Ramp shape").grid(row=2, column=0, sticky="w", **pad)
-        ttk.Combobox(self.frm_ramp, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(row=2, column=1, sticky="w", **pad)
+        ttk.Combobox(self.frm_ramp, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(
+            row=2, column=1, sticky="w", **pad)
         ramp_btns = ttk.Frame(self.frm_ramp)
         ramp_btns.grid(row=3, column=0, columnspan=4, sticky="w", **pad)
         ttk.Button(ramp_btns, text="Apply Initial", command=self.apply_initial).pack(side="left", padx=6)
@@ -219,18 +230,23 @@ class BridgeHeaterGUI:
         ttk.Label(self.frm_field, text="High current (µA)").grid(row=0, column=2, sticky="w", **pad)
         ttk.Entry(self.frm_field, textvariable=self.field_high_uA, width=12).grid(row=0, column=3, sticky="w", **pad)
         ttk.Label(self.frm_field, text="Field threshold (Oe)").grid(row=1, column=0, sticky="w", **pad)
-        ttk.Entry(self.frm_field, textvariable=self.field_threshold_oe, width=12).grid(row=1, column=1, sticky="w", **pad)
+        ttk.Entry(self.frm_field, textvariable=self.field_threshold_oe, width=12).grid(row=1, column=1, sticky="w",
+                                                                                       **pad)
         ttk.Label(self.frm_field, text="Check interval (s)").grid(row=1, column=2, sticky="w", **pad)
-        ttk.Entry(self.frm_field, textvariable=self.field_check_interval_s, width=12).grid(row=1, column=3, sticky="w", **pad)
+        ttk.Entry(self.frm_field, textvariable=self.field_check_interval_s, width=12).grid(row=1, column=3, sticky="w",
+                                                                                           **pad)
         ttk.Label(self.frm_field, text="Wait before high/ramp (s)").grid(row=2, column=0, sticky="w", **pad)
         ttk.Entry(self.frm_field, textvariable=self.field_wait_s, width=12).grid(row=2, column=1, sticky="w", **pad)
         ttk.Label(self.frm_field, text="Ramp shape").grid(row=2, column=2, sticky="w", **pad)
-        ttk.Combobox(self.frm_field, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(row=2, column=3, sticky="w", **pad)
+        ttk.Combobox(self.frm_field, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(
+            row=2, column=3, sticky="w", **pad)
         field_btns = ttk.Frame(self.frm_field)
         field_btns.grid(row=3, column=0, columnspan=4, sticky="w", **pad)
         ttk.Button(field_btns, text="AUTO", command=self.arm_field_mode).pack(side="left", padx=6)
-        ttk.Button(field_btns, text="Manual High", command=lambda: self.manual_override("high", "field")).pack(side="left", padx=6)
-        ttk.Button(field_btns, text="Manual Low", command=lambda: self.manual_override("low", "field")).pack(side="left", padx=6)
+        ttk.Button(field_btns, text="Manual High", command=lambda: self.manual_override("high", "field")).pack(
+            side="left", padx=6)
+        ttk.Button(field_btns, text="Manual Low", command=lambda: self.manual_override("low", "field")).pack(
+            side="left", padx=6)
         ttk.Button(field_btns, text="Stop", command=self.stop_auto_mode).pack(side="left", padx=6)
 
         self.frm_stab = ttk.LabelFrame(self.root, text="Field Stability Mode")
@@ -239,20 +255,25 @@ class BridgeHeaterGUI:
         ttk.Label(self.frm_stab, text="High current (µA)").grid(row=0, column=2, sticky="w", **pad)
         ttk.Entry(self.frm_stab, textvariable=self.stab_high_uA, width=12).grid(row=0, column=3, sticky="w", **pad)
         ttk.Label(self.frm_stab, text="|dB/dt| threshold (Oe/s)").grid(row=1, column=0, sticky="w", **pad)
-        ttk.Entry(self.frm_stab, textvariable=self.stab_dbdt_threshold, width=12).grid(row=1, column=1, sticky="w", **pad)
+        ttk.Entry(self.frm_stab, textvariable=self.stab_dbdt_threshold, width=12).grid(row=1, column=1, sticky="w",
+                                                                                       **pad)
         ttk.Label(self.frm_stab, text="Max field (Oe)").grid(row=1, column=2, sticky="w", **pad)
         ttk.Entry(self.frm_stab, textvariable=self.stab_max_field_oe, width=12).grid(row=1, column=3, sticky="w", **pad)
         ttk.Label(self.frm_stab, text="Check interval (s)").grid(row=2, column=0, sticky="w", **pad)
-        ttk.Entry(self.frm_stab, textvariable=self.stab_check_interval_s, width=12).grid(row=2, column=1, sticky="w", **pad)
+        ttk.Entry(self.frm_stab, textvariable=self.stab_check_interval_s, width=12).grid(row=2, column=1, sticky="w",
+                                                                                         **pad)
         ttk.Label(self.frm_stab, text="Wait before high/ramp (s)").grid(row=2, column=2, sticky="w", **pad)
         ttk.Entry(self.frm_stab, textvariable=self.stab_wait_s, width=12).grid(row=2, column=3, sticky="w", **pad)
         ttk.Label(self.frm_stab, text="Ramp shape").grid(row=3, column=0, sticky="w", **pad)
-        ttk.Combobox(self.frm_stab, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(row=3, column=1, sticky="w", **pad)
+        ttk.Combobox(self.frm_stab, textvariable=self.ramp_shape, width=12, state="readonly", values=RAMP_SHAPES).grid(
+            row=3, column=1, sticky="w", **pad)
         stab_btns = ttk.Frame(self.frm_stab)
         stab_btns.grid(row=4, column=0, columnspan=4, sticky="w", **pad)
         ttk.Button(stab_btns, text="AUTO", command=self.arm_stability_mode).pack(side="left", padx=6)
-        ttk.Button(stab_btns, text="Manual High", command=lambda: self.manual_override("high", "stability")).pack(side="left", padx=6)
-        ttk.Button(stab_btns, text="Manual Low", command=lambda: self.manual_override("low", "stability")).pack(side="left", padx=6)
+        ttk.Button(stab_btns, text="Manual High", command=lambda: self.manual_override("high", "stability")).pack(
+            side="left", padx=6)
+        ttk.Button(stab_btns, text="Manual Low", command=lambda: self.manual_override("low", "stability")).pack(
+            side="left", padx=6)
         ttk.Button(stab_btns, text="Stop", command=self.stop_auto_mode).pack(side="left", padx=6)
 
         frm_live = ttk.LabelFrame(self.root, text="Live Values")
@@ -289,7 +310,8 @@ class BridgeHeaterGUI:
             self.client = None
             self.mpv_client = None
             if backend == "PPMS":
-                self.client = PPMSClient.connect(self.dll_path.get(), remote=self.remote.get(), ip=self.ip.get(), port=int(self.port.get()))
+                self.client = PPMSClient.connect(self.dll_path.get(), remote=self.remote.get(), ip=self.ip.get(),
+                                                 port=int(self.port.get()))
             elif backend == "DynaCool MPV":
                 if mpv is None:
                     raise RuntimeError("MultiPyVu is not installed in this Python environment.")
@@ -331,8 +353,8 @@ class BridgeHeaterGUI:
             current_limit = max(float(current_uA), 0.1)
             voltage_limit_mV = 10.0
             self.mpv_client.resistivity.bridge_setup(channel, True, current_limit, power_uW, voltage_limit_mV)
-            self.mpv_client.resistivity.set_current(channel, float(current_uA), power_uW, voltage_limit_mV, dc, mode_code)
-
+            self.mpv_client.resistivity.set_current(channel, float(current_uA), power_uW, voltage_limit_mV, dc,
+                                                    mode_code)
 
     def _get_field_oe(self) -> float:
         if self.backend_name.get() == "PPMS":
@@ -371,7 +393,8 @@ class BridgeHeaterGUI:
         self.stop_requested = False
         self.ramp_running = True
         self.target_status.set("Ramp running")
-        self.ramp_thread = threading.Thread(target=self._ramp_worker, args=(initial, final, duration, step_interval, ramp_shape), daemon=True)
+        self.ramp_thread = threading.Thread(target=self._ramp_worker,
+                                            args=(initial, final, duration, step_interval, ramp_shape), daemon=True)
         self.ramp_thread.start()
 
     def stop_ramp(self):
@@ -546,7 +569,6 @@ class BridgeHeaterGUI:
         finally:
             self.auto_running = False
             self.auto_stop_requested = False
-
 
     def _run_embedded_ramp(self, stop_condition):
         initial = float(self.initial_uA.get())

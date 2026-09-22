@@ -1,9 +1,9 @@
-MultiPyVu
-PyYAML
 numpy
-pandas~=2.2.3
+pandas
 pillow
 pywin32
+PyYAML
 PyQt5~=5.15.9
 pyqtgraph~=0.14.0
-lakeshore~=1.8.1
+lakeshore
+MultiPyVu

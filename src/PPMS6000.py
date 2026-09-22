@@ -1,6 +1,8 @@
 import random
 import time
 
+from PyQt5.QtCore import QTimer
+
 from MeasurementDevice import MeasurementDevice, DeviceCard
 from threading import Thread
 from ExtraClasses import MeasurementDeviceType as mdType
@@ -84,6 +86,7 @@ class PPMS6000Card(DeviceCard):
         self.reconnect_btn = None
         self.tabs = None
         self.ppms = None
+        self.reading_timer = None
 
     def get_device_data(self):
         return {"id": self.id, "type": self.type, "name": self.name,
@@ -228,18 +231,19 @@ class PPMS6000Card(DeviceCard):
                 pass
 
             def update_readings():
-                while True:
-                    readings = self.ppms.get_readings()
-                    for ch, form in self.channel_forms.items():
-                        formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in readings[ch].items()]) + "]"
-                        try:
-                            form["readings"].setText(formatted)
-                        except RuntimeError:
-                            return
-                    time.sleep(1)
+                readings = self.ppms.get_readings()
+                for ch, form in self.channel_forms.items():
+                    formatted = "[" + ", ".join([f"{k[:3]}: {v:.2f}" for k, v in readings[ch].items()]) + "]"
+                    try:
+                        form["readings"].setText(formatted)
+                    except RuntimeError:
+                        print("runtime err in edit window")
+                        self.reading_timer.stop()
+                        return
 
-            t = Thread(daemon=True, target=update_readings)
-            t.start()
+            self.reading_timer = QTimer()
+            self.reading_timer.timeout.connect(update_readings)
+            self.reading_timer.start(1000)
 
         t = GuiThread(target=connect_ppms)
         t.start()
@@ -250,8 +254,9 @@ class PPMS6000Card(DeviceCard):
             self.connection_status.setStyleSheet("color: orange")
             self.connection_status.setFont(ds.FONT)
             self.reconnect_btn.hide()
-            t = Thread(daemon=True, target=update_display)
+            t = GuiThread(target=connect_ppms)
             t.start()
+            t.finished.connect(update_display)
 
         self.reconnect_btn.clicked.connect(reconnect)
 
