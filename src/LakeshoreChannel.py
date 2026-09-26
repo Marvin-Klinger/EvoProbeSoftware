@@ -14,7 +14,7 @@ from src.ExtraClasses import DeviceInfo
 class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
-    READER_INTERVALL = 0.5
+    READER_INTERVAL = 0.5
     KEYS = ["kelvin", "resistance", "power", "quadrature"]
     CALIBRATION_MAPPING = {"resistance": "kelvin"}
 
@@ -38,7 +38,7 @@ class LakeshoreChannel(MeasurementDevice):
         self.name += f"_Ch{self.input_channel.value}"
         self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
 
-        self.intervall = LakeshoreChannel.READER_INTERVALL
+        self.interval = LakeshoreChannel.READER_INTERVAL
         self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
@@ -80,7 +80,7 @@ class LakeshoreChannel(MeasurementDevice):
                 readings = device.get_logging_readings()
                 time_data = [datetime.now(), time.monotonic() - device.start_time]
                 device.log_readings(time_data + readings)
-            time.sleep(device.intervall)
+            time.sleep(device.interval)
 
     def ready_to_read(self):
         return (self.lakeshore.connected and

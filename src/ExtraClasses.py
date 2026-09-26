@@ -11,6 +11,7 @@ class DeviceInfo:
 
 
 class MeasurementDeviceType(IntEnum):
+    NONE = -1
     DUMMY = 0
     LAKESHORE = 1
     PPMS6000 = 2

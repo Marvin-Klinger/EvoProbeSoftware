@@ -7,7 +7,6 @@ from enum import IntEnum
 import threading
 
 from lakeshore import Model372
-from ppms_qdinstrument import PPMSClient, BridgeConfig, BridgeMeasurement
 
 from src.ExtraClasses import DeviceInfo
 from src.MeasurementDevice import MeasurementDevice, DeviceCard
