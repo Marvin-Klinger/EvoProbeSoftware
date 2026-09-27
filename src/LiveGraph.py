@@ -4,7 +4,7 @@ import pandas as pd
 import random
 import time
 import pyqtgraph as pg
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QTimer
 from itertools import chain
 from ExtraClasses import ColorFactory
 
@@ -25,6 +25,12 @@ class LiveGraph(pg.PlotWidget):
         self.lines = [{} for i in range(len(self.dfs))]
         self.initialize()
 
+        self.update_queue = set()
+        self.update_timer = QTimer()
+        self.update_timer.setInterval(500)
+        self.update_timer.timeout.connect(self._update_data)
+        self.update_timer.start()
+
     def initialize(self):
         self.setMinimumSize(400, 400)
         self.setBackground("w")
@@ -44,24 +50,29 @@ class LiveGraph(pg.PlotWidget):
         pen = pg.mkPen(color=color, width=3)
         return self.plot(x, y, name=name, pen=pen)
 
+    def _update_data(self):
+        while len(self.update_queue):
+            id, master_update = self.update_queue.pop()
+
+            if not self.use_custom_x_axis and not master_update:
+                df = self.dfs[id]
+                if self.x_axis == "timestamp":
+                    x = list(df[self.x_axis].map(lambda d: d.timestamp()))
+                else:
+                    x = list(df[self.x_axis])
+                for key, line in self.lines[id].items():
+                    line.setData(x, list(df[key]))
+
+            elif self.use_custom_x_axis and master_update:
+                df = self.dfs[0]
+                x = list(df[self.x_axis])
+                for key, line in self.lines[id].items():
+                    key = f"{id}-{key}"
+                    line.setData(x, list(df[key]))
+
     # updates line of id using data from dfs
     def update_data(self, id, master_update=False):
-        if not self.use_custom_x_axis and not master_update:
-            df = self.dfs[id]
-            if self.x_axis == "timestamp":
-                x = list(df[self.x_axis].map(lambda d: d.timestamp()))
-            else:
-                x = list(df[self.x_axis])
-            for key, line in self.lines[id].items():
-                line.setData(x, list(df[key]))
-
-        elif self.use_custom_x_axis and master_update:
-            df = self.dfs[0]
-            x = list(df[self.x_axis])
-            for key, line in self.lines[id].items():
-                key = f"{id}-{key}"
-                line.setData(x, list(df[key]))
-
+        self.update_queue.add((id, master_update))
         self.signal_data_updated.emit()
 
     def centre_graphs(self):

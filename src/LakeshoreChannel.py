@@ -14,7 +14,7 @@ from src.ExtraClasses import DeviceInfo
 class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
-    READER_INTERVAL = 0.5
+    READER_INTERVAL = 0.1
     KEYS = ["kelvin", "resistance", "power", "quadrature"]
     CALIBRATION_MAPPING = {"resistance": "kelvin"}
 
