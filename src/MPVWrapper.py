@@ -68,6 +68,8 @@ class MPVWrapper(MeasurementDevice):
         print("try connecting")
         self.lock.acquire(blocking=True)
         if self.connected:
+            print("already connected")
+            self.lock.release()
             return
 
         try:

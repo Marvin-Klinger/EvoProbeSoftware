@@ -3,8 +3,7 @@ from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt, QTimer
 
 from src.MeasurementDevice import MeasurementDevice
-import time
-from threading import Thread
+import numpy as np
 import DefaultSettings as ds
 
 
@@ -104,11 +103,12 @@ class PreviewCard(qtw.QWidget):
 
         for key in device.logging_keys:
             display = qtw.QLabel("-")
+            display.setFont(ds.FONT)
             self.reading_displays[key] = display
             device_layout.addRow(f"{key}: ", display)
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(lambda: self.update())
+        self.timer.timeout.connect(self.update)
         self.timer.start(2000)
 
     def update(self):
@@ -123,7 +123,13 @@ class PreviewCard(qtw.QWidget):
 
             readings = self.device.get_logging_readings()
             for i, key in enumerate(self.device.logging_keys):
-                self.reading_displays[key].setText(f"{readings[i]:.2f}")
+                reading_display = self.reading_displays[key]
+                if np.isnan(readings[i]):
+                    reading_display.setStyleSheet(f"color: grey")
+                else:
+                    reading_display.setText(f"{readings[i]:.2f}")
+                    reading_display.setStyleSheet(f"color: black")
+
         except RuntimeError:
             print("runtime err")
             self.timer.stop()
