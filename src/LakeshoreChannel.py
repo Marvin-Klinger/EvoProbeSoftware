@@ -15,6 +15,7 @@ class LakeshoreChannel(MeasurementDevice):
 
     SCANNER_SETTLE_TIME = 3
     READER_INTERVAL = 0.1
+    LOG_INTERVAL = 1
     KEYS = ["kelvin", "resistance", "power", "quadrature"]
     CALIBRATION_MAPPING = {"resistance": "kelvin"}
 
@@ -69,11 +70,31 @@ class LakeshoreChannel(MeasurementDevice):
 
     @staticmethod
     def _run(device):
+        buffer = pd.DataFrame(columns=["timestamp", "timedelta"]+device.logging_keys)
+        last_log_timestamp = time.monotonic()
+        is_scanner = False
         while device.is_logging:
-            if device.ready_to_read() and (not device.is_scanning or device.lakeshore.filter_is_ready):
-                readings = device.get_logging_readings()
-                time_data = [datetime.now(), time.monotonic() - device.start_time]
-                device.log_readings(time_data + readings)
+            if device.is_scanning:
+                if device.ready_to_read() and device.lakeshore.filter_is_ready:
+                    is_scanner = True
+                    readings = device.get_logging_readings()
+                    time_data = [datetime.now(), time.monotonic() - device.start_time]
+                    buffer.loc[len(buffer)] = time_data + readings
+                elif is_scanner:
+                    is_scanner = False
+                    device.log_readings(list(buffer.mean()))
+                    buffer = buffer.iloc[0:0]
+            else:
+                if device.ready_to_read():
+                    readings = device.get_logging_readings()
+                    time_data = [datetime.now(), time.monotonic() - device.start_time]
+                    buffer.loc[len(buffer)] = time_data + readings
+
+                if time.monotonic() - last_log_timestamp >= LakeshoreChannel.LOG_INTERVAL:
+                    last_log_timestamp = time.monotonic()
+                    device.log_readings(list(buffer.mean()))
+                    buffer = buffer.iloc[0:0]
+
             time.sleep(device.interval)
 
     def ready_to_read(self):
