@@ -26,25 +26,27 @@ class LakeshoreDevice:
 
     Devices = {}
 
-    def __init__(self, scanner_interval=10, baud_rate=BAUD_RATE, ip_address=IP_ADDRESS):
+    def __init__(self, scanner_interval=7, baud_rate=BAUD_RATE, ip_address=IP_ADDRESS):
 
         self.lakeshore: Model372 = None
         self.input_channels = []
+        self.filter_times = {}
         self.scanner_queue = deque()
         self.scanner_interval = scanner_interval
         self.baud_rate = baud_rate
         self.ip_address = ip_address
         self.current_channel = None
         self.is_ready = False
+        self.filter_is_ready = False
         self.is_cycling = False
         self.cycle_is_alive = False
         self.connected = False
-        # TODO: consider multiple locks for different use-cases
         self.lock = Lock()
 
         self.info = None
 
         self.scanner_ready_thread_id = 0
+        self.current_filter_time = 0
 
     def add_channel(self, channel: Model372.InputChannel):
         self.lock.acquire()
@@ -62,6 +64,7 @@ class LakeshoreDevice:
 
         if len(self.scanner_queue) < 1:
             print("scanner cycling not necessary")
+            self.is_cycling = False
             self.lock.release()
             return
 
@@ -77,7 +80,7 @@ class LakeshoreDevice:
             while self.is_cycling:
                 self.lock.release()
                 self.set_next_scanner_position()
-                time.sleep(self.scanner_interval)
+                time.sleep(LakeshoreDevice.SCANNER_SETTLE_TIME + self.current_filter_time + self.scanner_interval)
                 self.lock.acquire()
             self.cycle_is_alive = False
             self.lock.release()
@@ -126,14 +129,21 @@ class LakeshoreDevice:
         self.lakeshore.set_scanner_status(input_channel.value, False)
         self.current_channel = input_channel
         self.is_ready = False
+        self.filter_is_ready = False
         self.scanner_ready_thread_id = (self.scanner_ready_thread_id+1) % 0b10000000
 
+        if input_channel not in self.filter_times:
+            self.filter_times[input_channel] = self.lakeshore.get_filter(input_channel.value).get("settle_time", 0)
+        self.current_filter_time = self.filter_times[input_channel]
+
         def wait_for_ready():
-            # TODO: find actual settle time
             id = self.scanner_ready_thread_id
             time.sleep(LakeshoreDevice.SCANNER_SETTLE_TIME)
             if id == self.scanner_ready_thread_id:
                 self.is_ready = True
+                time.sleep(self.current_filter_time)
+                if id == self.scanner_ready_thread_id:
+                    self.filter_is_ready = True
 
         t = Thread(target=wait_for_ready, daemon=True)
         t.start()

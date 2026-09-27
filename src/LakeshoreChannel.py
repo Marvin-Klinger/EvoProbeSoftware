@@ -39,6 +39,7 @@ class LakeshoreChannel(MeasurementDevice):
         self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)
 
         self.interval = LakeshoreChannel.READER_INTERVAL
+        self.is_scanning = False
         self.last_reading = {key: np.nan for key in self.keys}
 
     # returns readings of {kelvin, resistance, power, quadrature(optional)} as dictionary
@@ -48,14 +49,6 @@ class LakeshoreChannel(MeasurementDevice):
             return self.last_reading
         else:
             return {key: np.nan for key in self.keys}
-
-    # returns readings converted to list
-    # def get_logging_readings(self):
-    #     readings = self.get_readings()
-    #     logging_readings = []
-    #     for key in self.keys:
-    #         logging_readings.append(readings[key])
-    #     return logging_readings
 
     # configures channels setup settings in lakeshore device
     def configure(self, settings: Model372InputSetupSettings):
@@ -67,16 +60,17 @@ class LakeshoreChannel(MeasurementDevice):
         self.connected = self.lakeshore.connected
 
     def start_reading(self):
-        # self.lakeshore.set_next_scanner_position()
         self.lakeshore.start_scanner_cycle()
+        self.is_scanning = self.input_channel != Model372.InputChannel.CONTROL and self.lakeshore.is_cycling
 
     def stop_reading(self):
         self.lakeshore.stop_scanner_cycle()
+        self.is_scanning = False
 
     @staticmethod
     def _run(device):
         while device.is_logging:
-            if device.ready_to_read():
+            if device.ready_to_read() and (not device.is_scanning or device.lakeshore.filter_is_ready):
                 readings = device.get_logging_readings()
                 time_data = [datetime.now(), time.monotonic() - device.start_time]
                 device.log_readings(time_data + readings)

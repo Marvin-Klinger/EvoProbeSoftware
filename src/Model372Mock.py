@@ -53,7 +53,7 @@ class Model372Mock(Model372):
         if input_channel == "A":
             return {"state": False, "settle_time": 10, "window": 10}
         else:
-            return {"state": True, "settle_time": 16, "window": 8}
+            return {"state": True, "settle_time": 5, "window": 8}
 
     def set_excitation_frequency(self, input_channel, frequency):
         print("setting frequency of ", input_channel, " to ", frequency)
