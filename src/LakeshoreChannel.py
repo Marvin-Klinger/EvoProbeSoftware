@@ -63,6 +63,7 @@ class LakeshoreChannel(MeasurementDevice):
     def start_reading(self):
         self.lakeshore.start_scanner_cycle()
         self.is_scanning = self.input_channel != Model372.InputChannel.CONTROL and self.lakeshore.is_cycling
+        print(self.input_channel, self.is_scanning)
 
     def stop_reading(self):
         self.lakeshore.stop_scanner_cycle()

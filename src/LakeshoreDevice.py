@@ -62,8 +62,9 @@ class LakeshoreDevice:
             self.lock.release()
             return
 
-        if len(self.scanner_queue) < 1:
+        if len(self.scanner_queue) <= 1:
             print("scanner cycling not necessary")
+            self.set_next_scanner_position()
             self.is_cycling = False
             self.lock.release()
             return
