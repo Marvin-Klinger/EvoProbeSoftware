@@ -1,3 +1,5 @@
+import time
+
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
@@ -84,16 +86,21 @@ class GuiActive(qtw.QWidget):
         graph_layout.setContentsMargins(0, 0, 0, 0)
         graph_holder.setLayout(graph_layout)
         settings_layout.addWidget(graph_holder)
+        graph_layout.addWidget(qtw.QLabel("start from timedelta ="))
         start_point = qtw.QLineEdit("0")
+        graph_layout.addWidget(start_point)
         start_point.setFont(ds.FONT)
         start_point.setValidator(qtg.QIntValidator())
-        graph_layout.addWidget(qtw.QLabel("start from timedelta ="))
-        graph_layout.addWidget(start_point)
         start_point.textEdited.connect(lambda: start_point.setStyleSheet("color: grey"))
         start_point.editingFinished.connect(
             lambda: start_point.setText(str(self.graph.set_start_from(start_point.text())))
         )
         start_point.editingFinished.connect(lambda: start_point.setStyleSheet("color: black"))
+        start_from_now_btn = qtw.QPushButton("start from now")
+        settings_layout.addWidget(start_from_now_btn)
+        start_from_now_btn.clicked.connect(lambda: start_point.setText(str(
+            self.graph.set_start_from(int(time.monotonic()-self.datahub.start_time))
+        )))
         settings_layout.addSpacing(10)
 
         settings_layout.addStretch()
