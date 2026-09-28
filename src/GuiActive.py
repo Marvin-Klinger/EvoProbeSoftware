@@ -3,6 +3,7 @@ from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
 from LiveGraph import Operations, QueueItemType
+import DefaultSettings as ds
 
 
 class GuiActive(qtw.QWidget):
@@ -16,7 +17,7 @@ class GuiActive(qtw.QWidget):
 
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
-        self.setFont(qtg.QFont("Bahnschrift", 16))
+        self.setFont(ds.FONT)
         self.tabs = qtw.QTabWidget()
         self.layout().addWidget(self.tabs)
 
@@ -77,7 +78,26 @@ class GuiActive(qtw.QWidget):
         hide_btn.clicked.connect(lambda: self.graph.set_legend_visibility(False))
         settings_layout.addSpacing(10)
 
+        settings_layout.addWidget(qtw.QLabel("Graph"))
+        graph_holder = qtw.QWidget()
+        graph_layout = qtw.QHBoxLayout()
+        graph_layout.setContentsMargins(0, 0, 0, 0)
+        graph_holder.setLayout(graph_layout)
+        settings_layout.addWidget(graph_holder)
+        start_point = qtw.QLineEdit("0")
+        start_point.setFont(ds.FONT)
+        start_point.setValidator(qtg.QIntValidator())
+        graph_layout.addWidget(qtw.QLabel("start from timedelta ="))
+        graph_layout.addWidget(start_point)
+        start_point.textEdited.connect(lambda: start_point.setStyleSheet("color: grey"))
+        start_point.editingFinished.connect(
+            lambda: start_point.setText(str(self.graph.set_start_from(start_point.text())))
+        )
+        start_point.editingFinished.connect(lambda: start_point.setStyleSheet("color: black"))
+        settings_layout.addSpacing(10)
+
         settings_layout.addStretch()
+        settings_holder.setFixedWidth(settings_holder.sizeHint().width())
 
         # Graph
         layout.addWidget(self.graph)

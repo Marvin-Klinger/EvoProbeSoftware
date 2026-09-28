@@ -31,6 +31,9 @@ class LiveGraph(pg.PlotWidget):
         self.update_timer.timeout.connect(self._update_data)
         self.update_timer.start()
 
+        self.start_from = 0
+        self.start_from_ids = [None] * len(self.dfs)
+
     def initialize(self):
         self.setMinimumSize(400, 400)
         self.setBackground("w")
@@ -56,6 +59,12 @@ class LiveGraph(pg.PlotWidget):
 
             if not self.use_custom_x_axis and not master_update:
                 df = self.dfs[id]
+                start_from = self._get_start_from_id(id)
+                if start_from == -1:
+                    df = df.loc[0:0]
+                else:
+                    df = df.loc[start_from:]
+
                 if self.x_axis == "timestamp":
                     x = list(df[self.x_axis].map(lambda d: d.timestamp()))
                 else:
@@ -65,6 +74,12 @@ class LiveGraph(pg.PlotWidget):
 
             elif self.use_custom_x_axis and master_update:
                 df = self.dfs[0]
+                start_from = self._get_start_from_id(0)
+                if start_from == -1:
+                    df = df.loc[0:0]
+                else:
+                    df = df.loc[start_from:]
+
                 x = list(df[self.x_axis])
                 for key, line in self.lines[id].items():
                     key = f"{id}-{key}"
@@ -73,10 +88,42 @@ class LiveGraph(pg.PlotWidget):
     # updates line of id using data from dfs
     def update_data(self, id, master_update=False):
         self.update_queue.add((id, master_update))
-        self.signal_data_updated.emit()
 
-    def centre_graphs(self):
-        pass
+    def update_all_data(self):
+        for i in range(1, len(self.dfs)):
+            self.update_data(i, master_update=self.use_custom_x_axis)
+
+    def _get_start_from_id(self, id):
+        if self.start_from_ids[id] is None:
+            df = self.dfs[id]["timedelta"]
+            if len(df) < 1 or df.loc[len(df)-1] < self.start_from:
+                return -1
+
+            start, end = 0, len(df)
+            while start != end:
+                mid = (start+end)//2
+                if df.loc[mid] < self.start_from:
+                    start = mid+1
+                else:
+                    end = mid
+
+            self.start_from_ids[id] = start
+            print(f"new start id {self.start_from_ids[id]} for graph {id}")
+
+        return self.start_from_ids[id]
+
+    def set_start_from(self, x):
+        try:
+            x = int(x)
+            x = max(0, x)
+        except ValueError:
+            x = 0
+
+        self.start_from = x
+        self.start_from_ids = [None]*len(self.start_from_ids)
+        self.update_all_data()
+        print(f"starting from {self.start_from}")
+        return self.start_from
 
     def hide_graphs(self, graphs=False):
         if not graphs:
@@ -97,8 +144,7 @@ class LiveGraph(pg.PlotWidget):
             self.setAxisItems({"bottom": pg.DateAxisItem()})
         else:
             self.setAxisItems({"bottom": pg.AxisItem(orientation="bottom")})
-        for i in range(1, len(self.dfs)):
-            self.update_data(i, master_update=self.use_custom_x_axis)
+        self.update_all_data()
         style = {"color": "grey", "font-size": "20px"}
         self.setLabel("bottom", x_axis, **style)
 
