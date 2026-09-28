@@ -17,6 +17,7 @@ class MeasurementDevice:
     def __init__(self, data, settings=None):
         self.info = None
         self.keys = []
+        self.units = [""] * len(self.keys)
         self.logging_keys = [key[:3] for key in self.keys]
         self.plotting_keys = self.logging_keys.copy()
         self.calibration = CalibrationFactory.create_function(data.get("calibration", None))

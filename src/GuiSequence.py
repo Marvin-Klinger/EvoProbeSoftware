@@ -104,6 +104,7 @@ class PreviewCard(qtw.QWidget):
         for key in device.logging_keys:
             display = qtw.QLabel("-")
             display.setFont(ds.FONT)
+            display.setAlignment(Qt.AlignRight)
             self.reading_displays[key] = display
             device_layout.addRow(f"{key}: ", display)
 
@@ -127,7 +128,7 @@ class PreviewCard(qtw.QWidget):
                 if np.isnan(readings[i]):
                     reading_display.setStyleSheet(f"color: grey")
                 else:
-                    reading_display.setText(f"{readings[i]:.2f}")
+                    reading_display.setText(f"{readings[i]:.2f} {self.device.units[i]}")
                     reading_display.setStyleSheet(f"color: black")
 
         except RuntimeError:
