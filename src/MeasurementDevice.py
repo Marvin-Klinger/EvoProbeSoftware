@@ -19,7 +19,7 @@ class MeasurementDevice:
         self.keys = []
         self.units = [""] * len(self.keys)
         self.logging_keys = [key[:3] for key in self.keys]
-        self.plotting_keys = self.logging_keys.copy()
+        self.default_plot_keys = [False] * len(self.keys)
         self.calibration = CalibrationFactory.create_function(data.get("calibration", None))
         self.calibration_mapping = {}
         self.connected = False

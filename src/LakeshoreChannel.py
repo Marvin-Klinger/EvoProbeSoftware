@@ -17,8 +17,9 @@ class LakeshoreChannel(MeasurementDevice):
     READER_INTERVAL = 0.1
     LOG_INTERVAL = 1
     KEYS = ["kelvin", "resistance", "power", "quadrature"]
-    UNITS = ["K", "Ω", "W", "?"]
+    UNITS = ["K", "Ω", "W", "iΩ"]
     CALIBRATION_MAPPING = {"resistance": "kelvin"}
+    DEFAULT_PLOT_KEYS = [True, True, False, False]
 
     def __init__(self, data, settings=None):
         super().__init__(data, settings)
@@ -36,7 +37,7 @@ class LakeshoreChannel(MeasurementDevice):
         self.keys = [key for key, use in zip(LakeshoreChannel.KEYS, key_bool_map) if use]
         self.units = [unit for unit, use in zip(LakeshoreChannel.UNITS, key_bool_map) if use]
         self.logging_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
-        self.plotting_keys = [f"{key[:3]}_{self.input_channel.value}" for key in self.keys]
+        self.default_plot_keys = [state for state, use in zip(LakeshoreChannel.DEFAULT_PLOT_KEYS, key_bool_map) if use]
         self.calibration_mapping = LakeshoreChannel.CALIBRATION_MAPPING
         self.name += f"_Ch{self.input_channel.value}"
         self.info = DeviceInfo(name=f"Channel {self.input_channel.value}", version=0)

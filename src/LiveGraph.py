@@ -12,7 +12,7 @@ from ExtraClasses import ColorFactory
 class LiveGraph(pg.PlotWidget):
     signal_data_updated = pyqtSignal()
 
-    def __init__(self, dfs, x_axis):
+    def __init__(self, dfs, x_axis, default_y_axis=None):
         super().__init__()
         self.dfs = dfs
         self.columns = [list(df.columns)[2:] for df in self.dfs]
@@ -20,6 +20,8 @@ class LiveGraph(pg.PlotWidget):
         self.x_axis_list = list(self.dfs[0].columns)
         self.use_custom_x_axis = False
         self.y_axis = self.columns.copy()
+        self.shown_y_axis = default_y_axis
+        print(self.shown_y_axis)
         self.legend = None
 
         self.lines = [{} for i in range(len(self.dfs))]
@@ -46,8 +48,13 @@ class LiveGraph(pg.PlotWidget):
         self.setClipToView(True)
         color_generator = ColorFactory.make_colorgenerator()
         for i in range(1, len(self.columns)):
-            for key in self.columns[i]:
+            for j, key in enumerate(self.columns[i]):
                 self.lines[i][key] = self.plot_line([], [], f"{i}-{key}", next(color_generator))
+                try:
+                    if not self.shown_y_axis[i][j]:
+                        self.lines[i][key].hide()
+                except (TypeError, IndexError):
+                    pass
 
     def plot_line(self, x, y, name, color):
         pen = pg.mkPen(color=color, width=3)

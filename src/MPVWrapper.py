@@ -22,6 +22,7 @@ class MPVWrapper(MeasurementDevice):
 
     KEYS = ["temperature", "field"]
     UNITS = ["K", "Oe"]
+    DEFAULT_PLOT_KEYS = [False, False]
 
     def __init__(self, data=None, settings=None):
         super().__init__({"name": "mpv"})
@@ -37,7 +38,7 @@ class MPVWrapper(MeasurementDevice):
         self.keys = MPVWrapper.KEYS
         self.units = MPVWrapper.UNITS
         self.logging_keys = ["temp", "field"]
-        self.plotting_keys = ["temp", "field"]
+        self.default_plot_keys = MPVWrapper.DEFAULT_PLOT_KEYS
         self.connected = False
 
         self.key_to_function = {"temperature": self.get_temperature,

@@ -66,6 +66,7 @@ class GuiSequence(qtw.QWidget):
         preview_layout.addRow(title_preview)
 
         devices_holder = qtw.QWidget()
+        # TODO: probably use gridlayout
         devices_layout = qtw.QHBoxLayout()
         devices_holder.setLayout(devices_layout)
         preview_layout.addRow(devices_holder)
@@ -75,6 +76,7 @@ class GuiSequence(qtw.QWidget):
             print("previewing device: ", device)
             card = PreviewCard(device)
             devices_layout.addWidget(card)
+        # devices_layout.addStretch()
         print("done")
 
         self.layout().addStretch()

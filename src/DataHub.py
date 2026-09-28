@@ -25,9 +25,10 @@ class DataHub:
         self.dfs = []
         self.logging_progress = [0] * (len(measurement_devices)+1)
         self.last_readings = [None] * (len(measurement_devices)+1)
+        self.default_plot_keys = [[]]
         self.initialize_files()
 
-        self.graph = LiveGraph(dfs=self.dfs, x_axis="timedelta")
+        self.graph = LiveGraph(dfs=self.dfs, x_axis="timedelta", default_y_axis=self.default_plot_keys)
 
     def initialize_files(self):
         # File Management
@@ -40,6 +41,7 @@ class DataHub:
         columns = ["timestamp", "timedelta"]
         for i, d in enumerate(self.measurement_devices):
             columns += [f"{i+1}-{keys}" for keys in d.logging_keys]
+            self.default_plot_keys.append(d.default_plot_keys)
         master_df = pd.DataFrame(columns=columns)
         self.dfs.append(master_df)
         master_df.to_csv(os.path.join(self.save_path, self.save_path_extensions[0]), encoding="utf-8", index=False)
