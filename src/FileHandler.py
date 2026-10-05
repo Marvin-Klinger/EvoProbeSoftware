@@ -4,6 +4,7 @@ import os
 SETUP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "setup.json"))
 USER_DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "user_data.json"))
 PUCK_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "pucks"))
+ROD_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "rods"))
 ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 
@@ -59,6 +60,12 @@ def get_pucks():
     files = [file for file in os.listdir(PUCK_DIR_PATH) if file.endswith(".json")]
     pucks = [get_json(os.path.join(PUCK_DIR_PATH, file)) for file in files]
     return pucks
+
+
+def get_rods():
+    files = [file for file in os.listdir(ROD_DIR_PATH) if file.endswith(".json")]
+    rods = [get_json(os.path.join(ROD_DIR_PATH, file)) for file in files]
+    return rods
 
 
 def setup_folder_structure():

@@ -21,6 +21,7 @@ LAKESHORE_FILTER_SETTINGS = (
 # Default Puck
 PUCK_SETTINGS = {
     "id": "default",
+    "compatibility": "64656661756C74",
     "n_of_slots": 3,
     "slots": [
         {"name": "Sample 1", "read_only": False},
@@ -35,6 +36,17 @@ PUCK_SETTINGS = {
                          "max_temperature": 4000}
          }
     ]
+}
+
+# Default Rod
+ROD_SETTINGS = {
+    "id": "default",
+    "compatibility": "64656661756C74",
+    "channels": {
+        "1": "thermometer",
+        "2": "cryopump",
+        "3": "heater"
+    }
 }
 
 # Default Gui Settings

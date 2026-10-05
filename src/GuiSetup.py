@@ -67,12 +67,28 @@ class GuiSetup(qtw.QWidget):
         print(self.current_puck)
         serial_form.addRow(" Puck ", self.puck_select)
 
-        rod_select = qtw.QComboBox()
-        rod_select.addItem("Rod 1")
-        rod_select.addItem("Rod 2")
-        serial_form.addRow(" Rod ", rod_select)
+        rods = [ds.ROD_SETTINGS] + FileHandler.get_rods()
+        self.rod_select = qtw.QComboBox()
+        for i, rod in enumerate(rods):
+            self.rod_select.addItem(rod["id"], i)
+        try:
+            index = [rod["id"] for rod in rods].index(setup_json["rod"])
+        except (ValueError, KeyError):
+            index = 0
+        self.rod_select.setCurrentIndex(index)
+        self.current_rod = rods[self.rod_select.currentData()]
+        print(self.current_rod)
+        serial_form.addRow(" Rod ", self.rod_select)
 
         serial_holder.setFixedWidth(serial_holder.sizeHint().width() + 20)
+
+        self.compatibility_warning = qtw.QLabel("! Rod and Puck arent compatible !")
+        self.compatibility_warning.setFont(ds.FONT)
+        self.compatibility_warning.setStyleSheet("color: yellow; background: black")
+        self.compatibility_warning.setAlignment(Qt.AlignCenter)
+        self.layout().addWidget(self.compatibility_warning)
+        self.check_compatibility()
+        self.compatibility_warning.setFixedWidth(self.compatibility_warning.sizeHint().width() + 10)
 
         # Measurement Device Section
         measurement_holder = qtw.QWidget()
@@ -166,8 +182,18 @@ class GuiSetup(qtw.QWidget):
 
             self.update_slots()
             self.save_setup_settings()
+            self.check_compatibility()
 
         self.puck_select.currentIndexChanged.connect(change_puck)
+
+        def change_rod(index):
+            print(index)
+            self.current_rod = rods[index]
+
+            self.save_setup_settings()
+            self.check_compatibility()
+
+        self.rod_select.currentIndexChanged.connect(change_rod)
 
     def create_slot(self, x=0):
         row = qtw.QWidget()
@@ -271,6 +297,7 @@ class GuiSetup(qtw.QWidget):
         print("saving")
         data = {
             "puck": self.puck_select.currentText(),
+            "rod": self.rod_select.currentText(),
             "devices": [card.get_device_data() for card in self.cards[:-1]],
             "slots": [slot["device"].currentData().get_slot_data(slot["extra"]) if slot["device"].currentData() is not None
                       else None for slot in self.slots],
@@ -306,3 +333,12 @@ class GuiSetup(qtw.QWidget):
             device.setCurrentIndex(index)
             device.adjustSize()
         self.pause_saving = False
+
+    def check_compatibility(self):
+        try:
+            if self.current_puck["compatibility"] == self.current_rod["compatibility"]:
+                self.compatibility_warning.hide()
+            else:
+                self.compatibility_warning.show()
+        except KeyError:
+            self.compatibility_warning.show()
