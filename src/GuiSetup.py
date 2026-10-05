@@ -156,11 +156,25 @@ class GuiSetup(qtw.QWidget):
         self.pause_saving = True
         self.update_slots()
 
+        rod_info_holder = qtw.QWidget()
+        rod_info_form = qtw.QFormLayout()
+        rod_info_holder.setLayout(rod_info_form)
+        self.layout().addWidget(rod_info_holder)
+
+        rod_info_title = qtw.QLabel("Rod Info")
+        rod_info_title.setFont(qtg.QFont("Bahnschrift", 20))
+        rod_info_form.addRow(rod_info_title)
+
+        for channel in self.current_rod.get("channels", []):
+            rod_info_form.addRow(f" Channel {channel['channel']}", qtw.QLabel(f": {channel['type']}"))
+
+        if len(self.current_rod.get("channels", [])) == 0:
+            rod_info_holder.hide()
+
         self.layout().addStretch()
 
         # Method Section (methods that have dependencies from later sections)
         def change_puck(index):
-            print(index)
             self.current_puck = pucks[index]
             n_of_slots = self.current_puck.get("n_of_slots", 1)
             for i in range(len(self.slots) - n_of_slots):
@@ -187,8 +201,15 @@ class GuiSetup(qtw.QWidget):
         self.puck_select.currentIndexChanged.connect(change_puck)
 
         def change_rod(index):
-            print(index)
             self.current_rod = rods[index]
+            for i in range(1, rod_info_form.rowCount()):
+                rod_info_form.removeRow(1)
+            for channel in self.current_rod.get("channels", []):
+                rod_info_form.addRow(f" Channel {channel['channel']}", qtw.QLabel(f": {channel['type']}"))
+            if len(self.current_rod.get("channels", [])) == 0:
+                rod_info_holder.hide()
+            else:
+                rod_info_holder.show()
 
             self.save_setup_settings()
             self.check_compatibility()

@@ -42,11 +42,11 @@ PUCK_SETTINGS = {
 ROD_SETTINGS = {
     "id": "default",
     "compatibility": "64656661756C74",
-    "channels": {
-        "1": "thermometer",
-        "2": "cryopump",
-        "3": "heater"
-    }
+    "channels": [
+        {"channel": 1, "type": "Thermometer"},
+        {"channel": 2, "type": "Cryopump"},
+        {"channel": 3, "type": "Heater"}
+    ]
 }
 
 # Default Gui Settings
