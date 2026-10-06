@@ -8,7 +8,7 @@ class Model372Mock(Model372):
 
     KELVIN = [x*4 for x in range(1, 6)]
     RESISTANCE = [x*10 for x in range(1, 6)]
-    POWER = [x*.5 for x in range(1, 6)]
+    POWER = [x*.05 for x in range(1, 6)]
     QUADRATURE = [x*2 for x in range(1, 6)]
     SCANNER = 1
 
@@ -24,11 +24,11 @@ class Model372Mock(Model372):
             input_channel = 0
         Model372Mock.KELVIN[input_channel] += random.randint(0, 4) - 2
         Model372Mock.RESISTANCE[input_channel] += random.randint(0, 8) - 4
-        Model372Mock.POWER[input_channel] += random.randint(0, 1) - 0.5
+        Model372Mock.POWER[input_channel] += (random.randint(0, 1) - 0.5) / 100
         Model372Mock.QUADRATURE[input_channel] += random.randint(0, 2) - 1
         return {"kelvin": max(0.01, Model372Mock.KELVIN[input_channel]),
                 "resistance": max(0.01, Model372Mock.RESISTANCE[input_channel]),
-                "power": max(0.01, Model372Mock.POWER[input_channel]),
+                "power": max(0.0000001, Model372Mock.POWER[input_channel]),
                 "quadrature": max(0.01, Model372Mock.QUADRATURE[input_channel])}
 
     def configure_input(self, input_channel, settings):

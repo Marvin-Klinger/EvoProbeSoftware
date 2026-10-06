@@ -36,8 +36,8 @@ class BridgeConfig:
     current_limit: float
     power_limit: float
     voltage_limit: float
-    calibration_mode: CalibrationMode = CalibrationMode.NONE
-    drive_mode: DriveMode = DriveMode.NONE
+    calibration_mode: CalibrationMode | int = CalibrationMode.NONE
+    drive_mode: DriveMode | int = DriveMode.NONE
 
 
 class QDInstrumentAPI:
@@ -54,7 +54,7 @@ class QDInstrumentAPI:
     def get_field(self) -> float:
         pass
 
-    def get_bridge_readings(self, bridge_channel: BridgeChannel) -> BridgeMeasurement:
+    def get_bridge_readings(self, bridge_channel: BridgeChannel | int) -> BridgeMeasurement:
         pass
 
     # if necessary
@@ -65,10 +65,10 @@ class QDInstrumentAPI:
     def set_field(self, set_point: float, rate: float):
         pass
 
-    def set_bridge_config(self, bridge_channel: BridgeChannel, config: BridgeConfig):
+    def set_bridge_config(self, bridge_channel: BridgeChannel | int, config: BridgeConfig):
         pass
 
-    def get_bridge_config(self, bridge_channel: BridgeChannel) -> BridgeConfig:
+    def get_bridge_config(self, bridge_channel: BridgeChannel | int) -> BridgeConfig:
         pass
 
     # either handle error here and return True|False or raise error if connection fails

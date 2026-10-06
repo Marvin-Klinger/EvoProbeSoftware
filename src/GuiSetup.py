@@ -13,14 +13,14 @@ from MeasurementDevice import MeasurementDevice
 from LakeshoreDevice import LakeshoreDevice
 from src.MPVWrapper import MPVWrapper
 from PPMS6000 import PPMS6000
+from src.QDInstrumentDevice import QDInstrumentDevice
 
 
 class GuiSetup(qtw.QWidget):
     DEVICES = {
         mdType.DUMMY: MeasurementDevice,
         mdType.LAKESHORE: LakeshoreDevice,
-        mdType.PPMS6000: PPMS6000,
-        mdType.DYNACOOL: Dynacool
+        mdType.QDInstrument: QDInstrumentDevice
     }
 
     def __init__(self, main_window):
@@ -266,7 +266,7 @@ class GuiSetup(qtw.QWidget):
         dlg.setFont(qtg.QFont("Bahnschrift", 16))
         dlg_layout = qtw.QVBoxLayout()
         dlg.setLayout(dlg_layout)
-        for md_type in mdType:
+        for md_type in GuiSetup.DEVICES:
             md_btn = qtw.QPushButton(md_type.name)
 
             def select_device(t):

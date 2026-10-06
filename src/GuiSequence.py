@@ -130,7 +130,10 @@ class PreviewCard(qtw.QWidget):
                 if np.isnan(readings[i]):
                     reading_display.setStyleSheet(f"color: grey")
                 else:
-                    reading_display.setText(f"{readings[i]:.2f} {self.device.units[i]}")
+                    if readings[i] >= 0.1:
+                        reading_display.setText(f"{readings[i]:.2f} {self.device.units[i]}")
+                    else:
+                        reading_display.setText(f"{readings[i]:.2e} {self.device.units[i]}")
                     reading_display.setStyleSheet(f"color: black")
 
         except RuntimeError:

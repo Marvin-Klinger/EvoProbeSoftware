@@ -16,7 +16,7 @@ class MeasurementDeviceType(IntEnum):
     LAKESHORE = 1
     PPMS6000 = 2
     DYNACOOL = 3
-    MPV = 4
+    QDInstrument = 4
 
 
 # allows to loop through different colors

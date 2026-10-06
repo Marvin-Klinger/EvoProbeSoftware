@@ -2,6 +2,7 @@ import random
 import time
 
 from PyQt5.QtCore import QTimer
+from src.GuiThread import GuiThread
 
 from MeasurementDevice import MeasurementDevice, DeviceCard
 from threading import Thread

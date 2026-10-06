@@ -39,10 +39,8 @@ class Controller:
             match slot.get("type", None):
                 case mdType.LAKESHORE:
                     devices.append(LakeshoreChannel(slot, settings.get(slot["id"], None)))
-                case mdType.DYNACOOL:
-                    devices.append(DynacoolChannel(slot))
-                case mdType.PPMS6000:
-                    devices.append(PPMS6000Channel(slot))
+                case mdType.QDInstrument:
+                    pass
                 case _:
                     pass
         self.devices = devices
