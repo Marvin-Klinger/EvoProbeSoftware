@@ -1,20 +1,11 @@
 import traceback
-
-import MultiPyVu as mpv
 import numpy as np
 from enum import IntEnum
-
 import threading
+import MultiPyVu as mpv
 
-from lakeshore import Model372
-
-from src.ExtraClasses import DeviceInfo
-from src.MeasurementDevice import MeasurementDevice, DeviceCard
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt
-from ExtraClasses import MeasurementDeviceType as mdType
-import DefaultSettings as ds
+from src.ExtraClasses import MeasurementDeviceType as mdType, DeviceInfo
+from src.Devices.MeasurementDevice import MeasurementDevice
 
 
 class MPVWrapper(MeasurementDevice):

@@ -1,15 +1,13 @@
 import time
 from datetime import datetime
-from enum import Enum
 from threading import Thread
-import os
-import pandas as pd
+
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
-import DefaultSettings as ds
-from ExtraClasses import MeasurementDeviceType as mdType, CalibrationFactory
+import src.DefaultSettings as ds
+from src.ExtraClasses import MeasurementDeviceType as mdType, CalibrationFactory
 
 
 class MeasurementDevice:

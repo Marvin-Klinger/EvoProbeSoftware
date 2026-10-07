@@ -1,13 +1,11 @@
 import time
 from datetime import datetime
-
 import numpy as np
-from lakeshore import Model372, Model372InputSetupSettings
 import pandas as pd
-import os
+from lakeshore import Model372, Model372InputSetupSettings
 
-from src.LakeshoreDevice import LakeshoreDevice
-from src.MeasurementDevice import MeasurementDevice
+from src.Devices.LakeshoreDevice import LakeshoreDevice
+from src.Devices.MeasurementDevice import MeasurementDevice
 from src.ExtraClasses import DeviceInfo
 
 
@@ -106,7 +104,3 @@ class LakeshoreChannel(MeasurementDevice):
                 (self.input_channel == Model372.InputChannel.CONTROL or
                  self.lakeshore.is_ready and
                  self.lakeshore.current_channel == self.input_channel))
-
-
-if __name__ == "__main__":
-    pass

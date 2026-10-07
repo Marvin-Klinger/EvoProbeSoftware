@@ -1,18 +1,15 @@
-import os
 import sys
-
-from src.DataHub import DataHub
-from src.GuiMain import GuiMain
-import src.FileHandler as FileHandler
-from src.ExtraClasses import MeasurementDeviceType as mdType
-from LakeshoreDevice import LakeshoreDevice, Model372
-from LakeshoreChannel import LakeshoreChannel
-from MPVWrapper import MPVWrapper
-from PPMS6000Channel import PPMS6000Channel
-from DynacoolChannel import DynacoolChannel
+import threading
 
 from PyQt5 import QtWidgets as qtw
-import threading
+
+from src.Data.DataHub import DataHub
+import src.FileHandler as FileHandler
+from src.ExtraClasses import MeasurementDeviceType as mdType
+from src.Gui.GuiMain import GuiMain
+from src.Devices.LakeshoreChannel import LakeshoreChannel
+from src.Devices.QDInstrumentChannel import QDInstrumentChannel
+from MPVWrapper import MPVWrapper
 
 
 class Controller:
@@ -40,7 +37,7 @@ class Controller:
                 case mdType.LAKESHORE:
                     devices.append(LakeshoreChannel(slot, settings.get(slot["id"], None)))
                 case mdType.QDInstrument:
-                    pass
+                    devices.append(QDInstrumentChannel(slot, settings.get(slot["id"], None)))
                 case _:
                     pass
         self.devices = devices

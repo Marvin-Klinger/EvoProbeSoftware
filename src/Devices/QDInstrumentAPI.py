@@ -1,6 +1,7 @@
 from enum import IntEnum
 from dataclasses import dataclass
-from ExtraClasses import MeasurementDeviceType as mdType
+
+from src.ExtraClasses import MeasurementDeviceType as mdType
 
 
 class BridgeChannel(IntEnum):

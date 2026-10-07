@@ -1,14 +1,11 @@
 from datetime import datetime, date, timedelta
-import time
-
 import numpy as np
-
-from DataReader import DataReader
-from LiveGraph import LiveGraph, QueueItemType, Operations
-from MeasurementDevice import MeasurementDevice
 import pandas as pd
-from multiprocessing import Process, Queue
+import time
 import os
+
+from src.Data.LiveGraph import LiveGraph
+from src.Devices.MeasurementDevice import MeasurementDevice
 
 
 class DataHub:

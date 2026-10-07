@@ -1,21 +1,19 @@
 import time
-
-import numpy as np
-from lakeshore import Model372
-from Model372Mock import Model372Mock, Model372InputSetupSettings
-from MeasurementDevice import DeviceCard
-from ExtraClasses import MeasurementDeviceType as mdType
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt, QThreadPool, QThread, QTimer
-import DefaultSettings as ds
-from GuiHelper import range_text_converter
-
 from collections import deque
 from threading import Thread, Lock
-from itertools import chain
+import numpy as np
+from lakeshore import Model372, Model372InputSetupSettings
 
-from src.GuiThread import GuiThread
+from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui as qtg
+from PyQt5.QtCore import Qt, QTimer
+
+from src.Gui.GuiThread import GuiThread
+from src.Mocks.Model372Mock import Model372Mock
+from src.ExtraClasses import MeasurementDeviceType as mdType
+import src.DefaultSettings as ds
+from src.Gui.GuiHelper import range_text_converter
+from src.Devices.MeasurementDevice import DeviceCard
 
 
 class LakeshoreDevice:

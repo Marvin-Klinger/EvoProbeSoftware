@@ -1,13 +1,15 @@
-from src.MeasurementDevice import MeasurementDevice, DeviceCard
-from src.QDInstrumentAPI import QDInstrumentAPI, BridgeConfig, BridgeChannel, CalibrationMode, DriveMode
-from threading import RLock, Thread
-from ExtraClasses import MeasurementDeviceType as mdType
-import DefaultSettings as ds
+from threading import RLock
 import numpy as np
+
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import QTimer
-from src.GuiThread import GuiThread
+
+import src.DefaultSettings as ds
+from src.Gui.GuiThread import GuiThread
+from src.ExtraClasses import MeasurementDeviceType as mdType
+from src.Devices.MeasurementDevice import MeasurementDevice, DeviceCard
+from src.Devices.QDInstrumentAPI import QDInstrumentAPI, BridgeConfig, BridgeChannel, CalibrationMode, DriveMode
 
 
 class QDInstrumentDevice(MeasurementDevice):
@@ -42,14 +44,8 @@ class QDInstrumentDevice(MeasurementDevice):
         return readings
 
     # configures physical device
-    def set_bridge_config(self, bridge_channel: int, current_limit: float, power_limit: float, voltage_limit: float,
-                          calibration_mode: int = -1, drive_mode: int = -1):
+    def set_bridge_config(self, bridge_channel: int, config: BridgeConfig):
         self.lock.acquire()
-        config = BridgeConfig(current_limit=current_limit,
-                              power_limit=power_limit,
-                              voltage_limit=voltage_limit,
-                              calibration_mode=calibration_mode,
-                              drive_mode=drive_mode)
         try:
             self.api.set_bridge_config(bridge_channel, config)
         except EOFError:

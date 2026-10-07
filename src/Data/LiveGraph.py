@@ -1,12 +1,10 @@
-from datetime import timedelta
 from enum import Enum
-import pandas as pd
-import random
-import time
+from itertools import chain
+
 import pyqtgraph as pg
 from PyQt5.QtCore import pyqtSignal, QTimer
-from itertools import chain
-from ExtraClasses import ColorFactory
+
+from src.ExtraClasses import ColorFactory
 
 
 class LiveGraph(pg.PlotWidget):
@@ -161,17 +159,3 @@ class LiveGraph(pg.PlotWidget):
             self.legend.anchor((-0.4, -0.4), (0, 0))
         else:
             self.legend.hide()
-
-
-class QueueItemType(Enum):
-    DATA = 0
-    OPERATION = 1
-
-
-class Operations(Enum):
-    ENABLE_XLIM = 0
-    DISABLE_XLIM = 1
-    ENABLE_YLIM = 2
-    DISABLE_YLIM = 3
-    CENTRE_GRAPHS = 4
-    CHANGE_DISPLAYED_GRAPHS = 5

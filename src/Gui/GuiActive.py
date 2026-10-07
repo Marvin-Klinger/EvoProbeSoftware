@@ -4,8 +4,7 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
-from LiveGraph import Operations, QueueItemType
-import DefaultSettings as ds
+import src.DefaultSettings as ds
 
 
 class GuiActive(qtw.QWidget):

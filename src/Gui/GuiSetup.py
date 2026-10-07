@@ -2,18 +2,12 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt
 
-from lakeshore import Model372
-from itertools import chain
-
-import DefaultSettings as ds
-from src.Dynacool import Dynacool
-from src.ExtraClasses import MeasurementDeviceType as mdType
+import src.DefaultSettings as ds
 import src.FileHandler as FileHandler
-from MeasurementDevice import MeasurementDevice
-from LakeshoreDevice import LakeshoreDevice
-from src.MPVWrapper import MPVWrapper
-from PPMS6000 import PPMS6000
-from src.QDInstrumentDevice import QDInstrumentDevice
+from src.ExtraClasses import MeasurementDeviceType as mdType
+from src.Devices.MeasurementDevice import MeasurementDevice
+from src.Devices.LakeshoreDevice import LakeshoreDevice
+from src.Devices.QDInstrumentDevice import QDInstrumentDevice
 
 
 class GuiSetup(qtw.QWidget):

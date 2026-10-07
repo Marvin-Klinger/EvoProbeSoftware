@@ -1,10 +1,11 @@
+import numpy as np
+
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5.QtCore import Qt, QTimer
 
-from src.MeasurementDevice import MeasurementDevice
-import numpy as np
-import DefaultSettings as ds
+from src.Devices.MeasurementDevice import MeasurementDevice
+import src.DefaultSettings as ds
 
 
 class GuiSequence(qtw.QWidget):

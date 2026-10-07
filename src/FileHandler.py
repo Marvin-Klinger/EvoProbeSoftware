@@ -1,11 +1,11 @@
 import json
 import os
 
-SETUP_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "setup.json"))
-USER_DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "user_data.json"))
-PUCK_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "pucks"))
-ROD_DIR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "persistent", "rods"))
 ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+SETUP_PATH = os.path.abspath(os.path.join(ROOT_PATH, "persistent", "setup.json"))
+USER_DATA_PATH = os.path.abspath(os.path.join(ROOT_PATH, "persistent", "user_data.json"))
+PUCK_DIR_PATH = os.path.abspath(os.path.join(ROOT_PATH, "persistent", "pucks"))
+ROD_DIR_PATH = os.path.abspath(os.path.join(ROOT_PATH, "persistent", "rods"))
 
 
 def get_json(path):
@@ -39,7 +39,7 @@ def get_setup_json():
         return {"devices": []}
 
 
-# TODO: overwrite only values in data
+# TODO: overwrite only values in data ?
 def save_setup_json(data):
     save_json(SETUP_PATH, data)
 
@@ -49,10 +49,11 @@ def get_user_data_json():
     if len(data):
         return data
     else:
-        return {"save_path": os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "out.csv"))}
+        return {"save_path": os.path.abspath(os.path.join(ROOT_PATH, "data", "out.csv"))}
 
 
 def save_user_data_json(data):
+    print(data)
     save_json(SETUP_PATH, data)
 
 
