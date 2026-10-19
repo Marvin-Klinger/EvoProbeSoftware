@@ -45,7 +45,7 @@ def save_setup_json(data):
 
 
 def get_user_data_json():
-    data = get_json(SETUP_PATH)
+    data = get_json(USER_DATA_PATH)
     if len(data):
         return data
     else:
@@ -53,8 +53,7 @@ def get_user_data_json():
 
 
 def save_user_data_json(data):
-    print(data)
-    save_json(SETUP_PATH, data)
+    save_json(USER_DATA_PATH, data)
 
 
 def get_pucks():

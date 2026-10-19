@@ -97,6 +97,13 @@ class MeasurementDevice:
     def stop_logging(self):
         self.is_logging = False
 
+    # returns the widget used for settings in GuiActive and its name
+    def get_settings_tab(self):
+        tab = qtw.QWidget()
+        tab.setLayout(qtw.QVBoxLayout())
+        tab.layout().addWidget(qtw.QLabel("here are settings"))
+        return tab, self.name
+
     # overridable method for getting device specific card
     @staticmethod
     def get_card(gui_setup, data=None):

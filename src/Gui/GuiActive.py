@@ -1,4 +1,5 @@
 import time
+import sys
 
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
@@ -14,7 +15,7 @@ class GuiActive(qtw.QWidget):
         self.main_window = main_window
         self.controller = controller
         self.datahub = self.controller.datahub if controller else None
-        self.graph = self.datahub.graph
+        self.graph = self.datahub.graph if self.datahub else None
 
         self.setLayout(qtw.QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -24,6 +25,7 @@ class GuiActive(qtw.QWidget):
 
         self.load_sequence_tab()
         self.load_graph_tab()
+        self.load_device_tab()
 
         self.tabs.setCurrentIndex(1)
 
@@ -109,3 +111,26 @@ class GuiActive(qtw.QWidget):
         layout.addWidget(self.graph)
 
         self.tabs.addTab(tab, "Graph")
+
+    def load_device_tab(self):
+        tab = qtw.QWidget()
+        layout = qtw.QHBoxLayout()
+        tab.setLayout(layout)
+
+        sub_tab = qtw.QTabWidget()
+        layout.addWidget(sub_tab)
+
+        for device in self.controller.devices:
+            settings, name = device.get_settings_tab()
+            sub_tab.addTab(settings, name)
+
+        self.tabs.addTab(tab, "Devices")
+
+
+if __name__ == "__main__":
+    app = qtw.QApplication(sys.argv)
+    main_window = qtw.QMainWindow()
+    a = GuiActive(None, None)
+    main_window.setCentralWidget(a)
+    main_window.show()
+    app.exec_()
