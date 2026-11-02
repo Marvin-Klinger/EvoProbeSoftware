@@ -10,6 +10,8 @@ from src.Gui.GuiThread import GuiThread
 from src.ExtraClasses import MeasurementDeviceType as mdType
 from src.Devices.MeasurementDevice import MeasurementDevice, DeviceCard
 from src.Devices.QDInstrumentAPI import QDInstrumentAPI, BridgeConfig, BridgeChannel, CalibrationMode, DriveMode
+from src.Mocks.QDInstrumentAPIMock import QDInstrumentAPIMock
+import src.FileHandler as FileHandler
 
 
 class QDInstrumentDevice(MeasurementDevice):
@@ -21,7 +23,7 @@ class QDInstrumentDevice(MeasurementDevice):
 
     def __init__(self, data=None, settings=None):
         super().__init__({"name": "QDInstrument"})
-        self.api = QDInstrumentAPI()
+        self.api = QDInstrumentAPIMock() if FileHandler.get_user_data_json().get("debug", False) else QDInstrumentAPI()
         self.lock = RLock()
         self.type = mdType.NONE
 
@@ -34,6 +36,8 @@ class QDInstrumentDevice(MeasurementDevice):
 
         self.key_to_function = {"temperature": self.get_temperature,
                                 "field": self.get_field}
+
+        self.debug = FileHandler.get_user_data_json().get("debug", False)
 
     # gets raw readings from device and applies calibration if necessary
     def get_readings(self):
@@ -57,6 +61,7 @@ class QDInstrumentDevice(MeasurementDevice):
             return None
 
         self.lock.acquire()
+        config = None
         try:
             config = self.api.get_bridge_config(bridge_channel)
         except EOFError:
@@ -372,14 +377,13 @@ class QDInstrumentCard(DeviceCard):
             self.name = name.text()
             self.gui_elements["name"].setText(self.name)
             for ch, form in self.channel_forms.items():
-                self.qd_instrument.set_bridge_config(
-                    ch,
+                self.qd_instrument.set_bridge_config(ch, BridgeConfig(
                     float(form["current_limit"].text()),
                     float(form["voltage_limit"].text()),
                     float(form["power_limit"].text()),
                     form["calibration_mode"].currentData(),
                     form["drive_mode"].currentData()
-                )
+                ))
 
             self.gui_setup.update_slots()
             self.gui_setup.save_setup_settings()

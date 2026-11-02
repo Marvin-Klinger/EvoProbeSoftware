@@ -14,12 +14,12 @@ from src.ExtraClasses import MeasurementDeviceType as mdType
 import src.DefaultSettings as ds
 from src.Gui.GuiHelper import range_text_converter
 from src.Devices.MeasurementDevice import DeviceCard
+import src.FileHandler as FileHandler
 
 
 class LakeshoreDevice:
     IP_ADDRESS = "192.168.0.12"
     BAUD_RATE = 57600
-    DEBUG_MODE = True
     SCANNER_SETTLE_TIME = 3
 
     Devices = {}
@@ -45,6 +45,8 @@ class LakeshoreDevice:
 
         self.scanner_ready_thread_id = 0
         self.current_filter_time = 0
+
+        self.debug = FileHandler.get_user_data_json().get("debug", False)
 
     def add_channel(self, channel: Model372.InputChannel):
         self.lock.acquire()
@@ -183,7 +185,7 @@ class LakeshoreDevice:
             self.lock.release()
             return
 
-        if LakeshoreDevice.DEBUG_MODE:
+        if self.debug:
             self.lakeshore = Model372Mock(baud_rate=None)
             self.connected = True
             print("connection successful")
