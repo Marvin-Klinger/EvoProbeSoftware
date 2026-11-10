@@ -90,10 +90,10 @@ class QDInstrumentAPI:
 [Client]
 Request:
 {function name}
-{parameter1},{parameter2} [optional] (types implied by function)
+{parameter1},{parameter2},... [optional] (types and amount implied by function)
 
 [Server]
 Answer:
 {Statuscode} (OK, ERROR)
-{return1},{return2} [optional] (types implied by Request)
+{return1},{return2},... [optional] (types and amount implied by Request)
 '''

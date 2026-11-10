@@ -31,14 +31,17 @@ def process_request(request):
         case "get_temp":
             return "OK\n456"
         case "set_temp":
-            print(f"setting temp to {lines[1]}")
-            return "OK"
+            try:
+                print(f"setting temp to {float(lines[1])}")
+                return "OK"
+            except (IndexError, ValueError):
+                return "ERROR"
         case _:
             return "ERROR"
 
 
 def client_program():
-    host = '127.0.0.1'
+    host = "127.0.0.1"
     port = 5000
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,7 +49,7 @@ def client_program():
 
     message = get_input()
 
-    while message != 'exit':
+    while message != "exit" and message != "":
         client_socket.sendall(message.encode())  # send message
         raw = client_socket.recv(1024)  # read up to 1024 bytes; larger messages require multiple recv() calls
         if not raw:
@@ -77,12 +80,12 @@ def get_input():
 [Client]
 Request:
 {function name}
-{parameter1},{parameter2},... [optional] (types implied by function)
+{parameter1},{parameter2},... [optional] (types and amount implied by function)
 
 [Server]
 Answer:
 {Statuscode} (OK, ERROR)
-{return1},{return2},... [optional] (types implied by Request)
+{return1},{return2},... [optional] (types and amount implied by Request)
 '''
 
 
