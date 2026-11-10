@@ -85,3 +85,15 @@ class QDInstrumentAPI:
     def is_connected(self) -> bool:
         pass
 
+
+'''
+[Client]
+Request:
+{function name}
+{parameter1},{parameter2} [optional] (types implied by function)
+
+[Server]
+Answer:
+{Statuscode} (OK, ERROR)
+{return1},{return2} [optional] (types implied by Request)
+'''

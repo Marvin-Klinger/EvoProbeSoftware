@@ -216,11 +216,13 @@ class LakeshoreChannel(MeasurementDevice):
                 connection_status.setStyleSheet("color: red")
                 connection_status.setFont(ds.FONT)
                 reconnect_btn.show()
+                channel_holder.hide()
                 return
 
             connection_status.setText("● Connected")
             connection_status.setStyleSheet("color: green")
             connection_status.setFont(ds.FONT)
+            channel_holder.show()
             # self.reconnect_btn.show()
 
             settings = self.lakeshore.get_input_setup_parameters(self.input_channel)
