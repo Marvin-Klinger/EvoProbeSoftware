@@ -13,6 +13,7 @@ from src.Devices.MeasurementDevice import MeasurementDevice
 from src.ExtraClasses import DeviceInfo
 import src.DefaultSettings as ds
 from src.Gui.GuiHelper import range_text_converter
+from src.Gui.GuiThread import GuiThread
 
 
 class LakeshoreChannel(MeasurementDevice):
@@ -113,10 +114,31 @@ class LakeshoreChannel(MeasurementDevice):
 
     # returns the widget used for settings in GuiActive and its name
     def get_settings_tab(self):
+        tab_holder = qtw.QWidget()
+        tab_holder.setFont(ds.FONT)
+        tab_holder.setLayout(qtw.QVBoxLayout())
+
+        connection_holder = qtw.QWidget()
+        connection_holder.setLayout(qtw.QHBoxLayout())
+        tab_holder.layout().addWidget(connection_holder)
+        connection_status = qtw.QLabel("● connecting...")
+        connection_holder.layout().addWidget(connection_status)
+        connection_status.setStyleSheet("color: orange")
+        connection_status.setFont(ds.FONT)
+        reconnect_btn = qtw.QPushButton("↻")
+        reconnect_btn.setContentsMargins(0, 0, 0, 0)
+        reconnect_btn.setFixedSize(25, 25)
+        reconnect_btn.hide()
+        connection_holder.layout().addWidget(reconnect_btn)
+        connection_holder.layout().addStretch()
+
+        # Settings
         ch = 0 if self.input_channel.value == 'A' else self.input_channel.value
         channel_holder = qtw.QWidget()
+        channel_holder.setFont(ds.FONT)
         form_layout = qtw.QFormLayout()
         channel_holder.setLayout(form_layout)
+        tab_holder.layout().addWidget(channel_holder)
 
         excitation_frequency = qtw.QComboBox()
         for item in Model372.InputFrequency:
@@ -187,6 +209,45 @@ class LakeshoreChannel(MeasurementDevice):
 
         use_filter.stateChanged.connect(lambda a, b=settle_time, c=window: use_filter_changed(a, b, c))
 
+        def update_display():
+            print("updating display")
+            if not self.lakeshore.connected:
+                connection_status.setText("● Not Connected")
+                connection_status.setStyleSheet("color: red")
+                connection_status.setFont(ds.FONT)
+                reconnect_btn.show()
+                return
+
+            connection_status.setText("● Connected")
+            connection_status.setStyleSheet("color: green")
+            connection_status.setFont(ds.FONT)
+            # self.reconnect_btn.show()
+
+            settings = self.lakeshore.get_input_setup_parameters(self.input_channel)
+            excitation_frequency.setCurrentIndex(
+                self.lakeshore.get_excitation_frequency(Model372.InputChannel("A" if ch == 0 else 0)).value - 1)
+            if ch != 0:
+                excitation_mode.setCurrentIndex(settings.mode.value)
+                resistance_range.setCurrentIndex(settings.resistance_range.value - 1)
+            excitation_range.setCurrentIndex(settings.excitation_range.value - 1)
+            auto_range.setChecked(settings.auto_range.value)
+            filter_settings = self.lakeshore.get_filter(Model372.InputChannel("A" if ch == 0 else ch))
+            use_filter.setChecked(filter_settings["state"])
+            settle_time.setValue(filter_settings["settle_time"])
+            window.setValue(filter_settings["window"])
+
+        update_display()
+
+        def reconnect():
+            connection_status.setText("● connecting...")
+            connection_status.setStyleSheet("color: orange")
+            connection_status.setFont(ds.FONT)
+            reconnect_btn.hide()
+            t = GuiThread(target=update_display)
+            t.start()
+
+        reconnect_btn.clicked.connect(reconnect)
+
         def apply_changes():
             if self.lakeshore is not None and self.lakeshore.connected:
                 self.lakeshore.set_excitation_frequency(Model372.InputChannel.CONTROL, excitation_frequency.currentData())
@@ -222,4 +283,6 @@ class LakeshoreChannel(MeasurementDevice):
         btn_holder.layout().addWidget(apply_btn)
         apply_btn.clicked.connect(apply_changes)
 
-        return channel_holder, f"LS_Ch{self.input_channel.value}"
+        tab_holder.layout().addStretch()
+
+        return tab_holder, f"LS_Ch{self.input_channel.value}"

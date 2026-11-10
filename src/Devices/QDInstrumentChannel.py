@@ -55,15 +55,13 @@ class QDInstrumentChannel(MeasurementDevice):
     # returns the widget used for settings in GuiActive and its name
     def get_settings_tab(self):
         print("getting tab")
-        # Settings
-        channel_holder = qtw.QWidget()
-        channel_holder.setFont(ds.FONT)
-        form_layout = qtw.QFormLayout()
-        channel_holder.setLayout(form_layout)
+        tab_holder = qtw.QWidget()
+        tab_holder.setFont(ds.FONT)
+        tab_holder.setLayout(qtw.QVBoxLayout())
 
         connection_holder = qtw.QWidget()
         connection_holder.setLayout(qtw.QHBoxLayout())
-        form_layout.addRow(connection_holder)
+        tab_holder.layout().addWidget(connection_holder)
         connection_status = qtw.QLabel("● connecting...")
         connection_holder.layout().addWidget(connection_status)
         connection_status.setStyleSheet("color: orange")
@@ -76,6 +74,11 @@ class QDInstrumentChannel(MeasurementDevice):
         connection_holder.layout().addStretch()
 
         # Settings
+        channel_holder = qtw.QWidget()
+        form_layout = qtw.QFormLayout()
+        channel_holder.setLayout(form_layout)
+        tab_holder.layout().addWidget(channel_holder)
+
         current_limit = qtw.QLineEdit()
         current_limit.setValidator(qtg.QDoubleValidator())
         current_limit.setText("0")
@@ -114,11 +117,13 @@ class QDInstrumentChannel(MeasurementDevice):
                 connection_status.setStyleSheet("color: red")
                 connection_status.setFont(ds.FONT)
                 reconnect_btn.show()
+                channel_holder.hide()
                 return
 
             connection_status.setText("● Connected")
             connection_status.setStyleSheet("color: green")
             connection_status.setFont(ds.FONT)
+            channel_holder.show()
             # self.reconnect_btn.show()
 
             config = self.qd_instrument.get_bridge_config(self.bridge_channel)
@@ -141,9 +146,7 @@ class QDInstrumentChannel(MeasurementDevice):
                 drive_mode_label.hide()
                 drive_mode.hide()
 
-        # t = GuiThread(target=self.connect)
-        # t.start()
-        # t.finished.connect(update_display)
+        update_display()
 
         def reconnect():
             connection_status.setText("● connecting...")
@@ -175,4 +178,6 @@ class QDInstrumentChannel(MeasurementDevice):
 
         apply_btn.clicked.connect(apply_changes)
 
-        return channel_holder, f"QDI_{self.bridge_channel}"
+        tab_holder.layout().addStretch()
+
+        return tab_holder, f"QDI_{self.bridge_channel}"
